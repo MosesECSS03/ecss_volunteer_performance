@@ -1,0 +1,355 @@
+.dashboard-container {
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.seat-actions {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.seat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 20px;
+  /*border: 1px solid #e0e0e0;*/
+  background: #006400;
+  border-radius: 8px;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 95vw;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
+/* Make the row and label row fit content so they scroll horizontally */
+.seat-grid-label-row,
+.seat-row {
+  display: flex;
+  align-items: center;
+  min-width: max-content; /* Allow horizontal scrolling */
+}
+
+.seat-row {
+  margin-bottom: 6px;
+}
+.seat-row:last-child {
+  margin-bottom: 0;
+}
+
+.seat-grid-label-cell,
+.seat-row-label,
+.seat,
+.seat-col-label {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  box-sizing: border-box;
+  margin: 0;
+  border-radius: 4px;
+}
+
+.seat-grid-label-cell,
+.seat-row-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-sizing: border-box;
+  margin: 0;
+  border-radius: 4px;
+}
+
+/* Add horizontal gap between all cells except the first */
+.seat-grid-label-row > *:not(:first-child),
+.seat-row > *:not(:first-child) {
+  margin-left: 4px;
+}
+
+.seat-grid-label-cell {
+  color: #1976d2;
+  background: #e3eafc;
+}
+
+.seat-row-label {
+  color: #1976d2;
+  background: #e3eafc;
+}
+
+/* Default seat */
+.seat {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+/* Remove background from seat and legend seat boxes */
+.seat,
+.legend-available,
+.legend-selected,
+.legend-reserved,
+.legend-ai {
+  background: none !important;
+}
+
+/* Seat logo as a single SVG background */
+.seat::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%233a86ff"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23bde0fe"/></svg>') center/contain no-repeat;
+  z-index: 1;
+}
+
+/* Overlapping seat label */
+.seat-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: #222; /* Dark font for light seat */
+  pointer-events: none;
+  text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
+}
+
+/* Selected seat: blue-green, white font */
+.seat.selected::before {
+  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%2300b894"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23a7ffeb"/></svg>') center/contain no-repeat;
+}
+.seat.selected .seat-label {
+  color: #fff;
+  text-shadow: 0 1px 2px #00695c, 0 0 2px #00695c;
+}
+
+/* Reserved seat: gray, yellow font */
+.seat.reserved::before {
+  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%23999"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23f1c40f"/></svg>') center/contain no-repeat;
+}
+.seat.reserved .seat-label {
+  color: #f1c40f;
+  text-shadow: 0 1px 2px #444, 0 0 2px #444;
+}
+
+/* AI-suggested seat: purple, white font */
+.seat.ai-suggested::before {
+  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%238e44ad"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23d6b3ff"/></svg>') center/contain no-repeat;
+}
+.seat.ai-suggested .seat-label {
+  color: #fff;
+  text-shadow: 0 1px 2px #6c3483, 0 0 2px #6c3483;
+}
+
+/* --- Seat and Legend: Available --- */
+.seat,
+.legend-available {
+  background: #e3eafc;
+  color: #1976d2;
+  border: none;
+}
+.seat .seat-label,
+.legend-available {
+  color: #1976d2;
+  text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
+}
+
+/* --- Seat and Legend: Selected --- */
+.seat.selected,
+.legend-selected {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+}
+.seat.selected .seat-label,
+.legend-selected {
+  color: #fff;
+  text-shadow: 0 1px 2px #1565c0, 0 0 2px #1565c0;
+}
+
+/* --- Seat and Legend: Reserved --- */
+.seat.reserved,
+.legend-reserved {
+  background: #bdbdbd;
+  color: #fff;
+  border: none;
+}
+.seat.reserved .seat-label,
+.legend-reserved {
+  color: #fff;
+  text-shadow: 0 1px 2px #757575, 0 0 2px #757575;
+}
+
+/* --- Seat and Legend: AI Suggested --- */
+.seat.ai-suggested,
+.legend-ai {
+  background: #ffeb3b;
+  color: #333;
+  border: none;
+}
+.seat.ai-suggested .seat-label,
+.legend-ai {
+  color: #333;
+  text-shadow: 0 1px 2px #fffde7, 0 0 2px #fffde7;
+}
+
+/* Legend seat box style */
+.legend .seat,
+.legend-available,
+.legend-selected,
+.legend-reserved,
+.legend-ai {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+  line-height: 32px;
+  box-sizing: border-box;
+}
+
+/* Legend seat icon style */
+.legend-seat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 2px solid transparent;
+  background: none;
+  box-sizing: border-box;
+}
+
+/* Match seat border color for each status */
+.legend-available { border-color: #1976d2; }
+.legend-selected  { border-color: #1565c0; }
+.legend-reserved  { border-color: #757575; }
+.legend-ai        { border-color: #fbc02d; }
+
+/* Remove old legend backgrounds and borders */
+.legend-available,
+.legend-selected,
+.legend-reserved,
+.legend-ai {
+  background: none !important;
+  border: none !important;
+}
+
+.reserve-btn, .ai-btn {
+  padding: 10px 24px;
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ai-btn {
+  background: #fbc02d;
+  color: #333;
+}
+
+.reserve-btn:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+
+.legend {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 14px;
+}
+
+.legend .seat {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.seat-col-label {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  box-sizing: border-box;
+  margin: 0;
+  border-radius: 4px;
+  color: #fff;
+  background: #1976d2;
+}
+
+/* Add horizontal gap between column labels, but not before the first */
+.seat-grid-label-row > .seat-col-label:not(:first-child) {
+  margin-left: 4px; /* Adjust gap size as needed */
+}
+
+/* Legend styles - use distinct colors from the seat grid */
+.legend-available {
+  background: #b2dfdb;   /* Teal */
+  border: 1px solid #009688;
+}
+
+.legend-selected {
+  background: #ffd54f;   /* Amber */
+  border: 1px solid #ffa000;
+}
+
+.legend-reserved {
+  background: #ef9a9a;   /* Light red */
+  border: 1px solid #c62828;
+}
+
+.legend-ai {
+  background: #90caf9;   /* Light blue */
+  border: 1px solid #1976d2;
+}
+
+/* Responsive for mobile */
+@media (max-width: 600px) {
+  .seat, .seat-row-label, .seat-grid-label-cell, .seat-col-label {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+  .seat-grid {
+    padding: 0;
+  }
+}
