@@ -4,6 +4,11 @@ import ReservationTable from './ReservationTable';
 import ReservationForm from './RegistrationForm';
 import axios from 'axios';
 
+const API_BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:3001"
+    : "https://ecss-performance-night-2025.azurewebsites.net";
+
 function getFormattedDateTime() {
   const now = new Date();
   const pad = n => n.toString().padStart(2, '0');
@@ -55,11 +60,11 @@ class App extends Component {
 
     try {
       // 1. Insert the record
-      const insertResponse = await axios.post('http://localhost:3001/ticketSales', { purpose: "insert", records: [seatRecord] });
+      const insertResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "insert", records: [seatRecord] });
 
       if (insertResponse.data.success) {
         // 2. Generate the PDF (assume you have a separate endpoint for this)
-        const pdfResponse = await axios.post('http://localhost:3001/ticketSales', { purpose: "generate", records: [seatRecord] });
+        const pdfResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "generate", records: [seatRecord] });
 
         if (pdfResponse.data.receiptPdfBase64) {
           const base64 = pdfResponse.data.receiptPdfBase64;
@@ -137,7 +142,7 @@ class App extends Component {
 
   componentDidMount = async () => {
     try {
-      const response = await axios.post('http://localhost:3001/ticketSales', { purpose: "retrieve" });
+      const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
       var records = response.data.result.data;
 
       console.log("Records:", records);
