@@ -7,7 +7,7 @@
     "start": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vite test",
+    "test": "echo \"No tests yet\" && exit 0",
     "eject": "vite eject",
     "test:run": "npm run test --if-present"
   },
