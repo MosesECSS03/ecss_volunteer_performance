@@ -1,4 +1,4 @@
-name: Azure Static Web Apps CI/CD
+name: Deploying Frontend Code (React + Vite) - ECSS Musical Concert 2025
 
 on:
   push:
