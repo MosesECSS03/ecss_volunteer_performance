@@ -47,13 +47,19 @@ class TicketSalesController
                 var collectionName = "ticket_sales";          
                 var connectedDatabase = await this.databaseConnectivity.retrieveFromDatabase(databaseName, collectionName);
                 console.log("Connected Database:", connectedDatabase);
-                   
-                if(connectedDatabase.acknowledged === true)
-                {
+
+                // FIX: Check if data exists, not acknowledged
+                if (connectedDatabase && connectedDatabase.data) {
                     return {
                         success: true,
                         message: "Sales records retrieved successfully",
                         data: connectedDatabase.data
+                    };
+                } else {
+                    return {
+                        success: false,
+                        message: "No sales records found",
+                        data: []
                     };
                 }
             }

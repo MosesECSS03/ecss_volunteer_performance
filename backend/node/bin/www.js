@@ -19,6 +19,12 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
+// --- Add Socket.IO setup ---
+const { Server } = require("socket.io");
+const io = new Server(server, { cors: { origin: "*" } });
+app.set('io', io); // Make io available in routes
+// --- End Socket.IO setup ---
+
 /**
  * Listen on provided port, on all network interfaces.
  */
@@ -78,7 +84,7 @@ function onError(error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-//Please
+
 function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'

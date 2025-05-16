@@ -54,6 +54,8 @@ router.post('/', async function(req, res, next)
 {
   try 
   {
+    const io = req.app.get('io'); // Get the Socket.IO instance
+
     if(req.body.purpose === "insert") 
     {
       const records = req.body.records;
@@ -102,6 +104,10 @@ router.post('/', async function(req, res, next)
       var controller = new TicketSalesController();
       console.log("Grouped Records:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
+
+      // Emit socket event after successful insert
+     if (io) io.emit('reservation-updated');
+
       return res.json({ success: true, ...result });
     }
     else if(req.body.purpose === "generate") 
@@ -151,6 +157,9 @@ router.post('/', async function(req, res, next)
       // Generate PDF only (not insert)
       const pdfBuffer = await receiptGenerator.generate(groupedRecords);
       const pdfBase64 = pdfBuffer.toString('base64');
+
+     // if (io) io.emit('reservation-updated');
+
       return res.json({ success: true, receiptPdfBase64: pdfBase64 });
     }
     else if(req.body.purpose === "retrieve") 
@@ -158,6 +167,8 @@ router.post('/', async function(req, res, next)
       // Instantiate controller and retrieve records
       var controller = new TicketSalesController();
       var result = await controller.getSalesRecords();
+      //if (io) io.emit('retrieve-updated');
+
       return res.json({result});
     }
   } 

@@ -3,6 +3,7 @@ import SeatDashboard from './SeatDashboard';
 import ReservationTable from './ReservationTable';
 import ReservationForm from './RegistrationForm';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 //https://ecss-performance-night-2025.azurewebsites.net/
 const API_BASE_URL =
   window.location.hostname === "localhost"
@@ -141,18 +142,29 @@ class App extends Component {
     return [seatStr];
   };
 
-  componentDidMount = async () => {
+  componentDidMount() {
+    this.fetchRecords();
+
+    this.socket = io(API_BASE_URL);
+
+    this.socket.on('reservation-updated', () => {
+      console.log("Socket event received");
+      this.fetchRecords();
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.socket) this.socket.disconnect();
+  }
+
+  fetchRecords = async () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
       var records = response.data.result.data;
 
-      console.log("Records:", records);
-
       const allReservedSeats = records.flatMap(record =>
         record.seats.flatMap(seatStr => this.expandSeatRange(seatStr))
       );
-
-      console.log("All Seats:", allReservedSeats);
 
       this.setState({ records, allReservedSeats });
     } catch (error) {
