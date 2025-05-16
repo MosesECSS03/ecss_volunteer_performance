@@ -1,4 +1,4 @@
-name: Deploying Frontend Code (Node + Express) - ECSS Musical Concert 2025
+name: Deploying Backend Code (Node + Express) - ECSS Musical Concert 2025
 
 on:
   push:
