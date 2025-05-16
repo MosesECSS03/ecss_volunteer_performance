@@ -3,7 +3,7 @@ import SeatDashboard from './SeatDashboard';
 import ReservationTable from './ReservationTable';
 import ReservationForm from './RegistrationForm';
 import axios from 'axios';
-
+//https://ecss-performance-night-2025.azurewebsites.net/
 const API_BASE_URL =
   window.location.hostname === "localhost"
     ? "http://localhost:3001"
@@ -60,6 +60,7 @@ class App extends Component {
 
     try {
       // 1. Insert the record
+      console.log("PI_BASE_URL", API_BASE_URL);
       const insertResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "insert", records: [seatRecord] });
 
       if (insertResponse.data.success) {
