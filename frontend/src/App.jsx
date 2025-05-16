@@ -24,20 +24,33 @@ class App extends Component {
       activeTab: 'form', // 'form' or 'table'
       selectedSeatsCount: 0,
       lastReservedCount: 0,
-      reservedSeats: [], // <-- add this
+      reservedSeats: [],
       allReservedSeats: []
     };
   }
 
   handleAddRecords = async (formData) => {
-    console.log("Form Data:", formData);
+    //console.log('Form Data:', formData);
+    // Get current year
+    const year = new Date().getFullYear();
 
+    // Use all records for booking number generation (no filter)
+    let nextNumber = this.state.records.length + 1;
+    const padded = String(nextNumber).padStart(3, '0');
+    const bookingNo = `ECSS/MC${year}/${padded}`;
+
+    // Build the seatRecord with bookingNo
     const seatRecord = {
       name: formData.name,
+      staffName: formData.staffName,
       location: formData.location,
       price: formData.price,
       seats: formData.seats,
       time: getFormattedDateTime(),
+      paymentType: formData.paymentType,
+      paymentRef: formData.paymentRef,
+      selectedSeatsCount: formData.selectedSeatsCount,
+      bookingNo,
     };
 
     try {
@@ -57,8 +70,20 @@ class App extends Component {
           }
           const byteArray = new Uint8Array(byteNumbers);
           const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+          // Create a blob URL
           const blobUrl = URL.createObjectURL(blob);
+
+          // 1. Open the PDF in a new tab for viewing
           window.open(blobUrl, '_blank');
+
+          // 2. Download the PDF with booking number as filename
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `${seatRecord.paymentRef} ${seatRecord.bookingNo}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
 
         this.setState(prevState => ({
@@ -66,6 +91,9 @@ class App extends Component {
           selectedSeatsCount: 0,
           lastReservedCount: 0
         }));
+
+        // Refresh the page
+        window.location.reload();
       }
     } catch (error) {
       console.error('❌ Error saving records:', error);
@@ -81,19 +109,14 @@ class App extends Component {
   };
 
   handleReserve = (reservedSeats) => {
-    // Convert keys like "2-16" to seat labels like "E17"
-    const reservedLabels = reservedSeats.map(key => {
-      const [row, col] = key.split('-');
-      return `${String.fromCharCode(67 + Number(row))}${Number(col) + 1}`;
-    });
-
+    console.log("Reserved Seats:", reservedSeats);
     this.setState(prevState => ({
-      lastReservedCount: reservedLabels.length,
-      reservedSeats: reservedLabels,
+      lastReservedCount: reservedSeats.length,
+      reservedSeats: reservedSeats,
       selectedSeatsCount: 0,
-      allReservedSeats: [...prevState.allReservedSeats, ...reservedLabels] // <-- add here
+      allReservedSeats: [...prevState.allReservedSeats, ...reservedSeats]
     }));
-  };  
+  };
 
   expandSeatRange = (seatStr) => {
     // If it's a range like "F11 - F13"
@@ -104,7 +127,7 @@ class App extends Component {
       const endNum = parseInt(end.slice(1));
       const seats = [];
       for (let i = startNum; i <= endNum; i++) {
-        seats.push(`${row}${i}`);
+        seats.push(`${row}${i.toString().padStart(2, '0')}`);
       }
       return seats;
     }
@@ -116,31 +139,29 @@ class App extends Component {
     try {
       const response = await axios.post('http://localhost:3001/ticketSales', { purpose: "retrieve" });
       var records = response.data.result.data;
-      
+
       console.log("Records:", records);
 
       const allReservedSeats = records.flatMap(record =>
         record.seats.flatMap(seatStr => this.expandSeatRange(seatStr))
       );
-      
-      console.log("All Seats:", allReservedSeats);  // You had "allSeats" here by mistake
-      
-      this.setState({ records, allReservedSeats });  // Missing closing }
+
+      console.log("All Seats:", allReservedSeats);
+
+      this.setState({ records, allReservedSeats });
     } catch (error) {
       console.error("Error fetching ticket sales:", error);
     }
   };
 
-
   render() {
-    const { records, activeTab, lastReservedCount, allReservedSeats} = this.state;
+    const { records, activeTab, lastReservedCount, allReservedSeats } = this.state;
     return (
       <div>
         {/* SeatDashboard is always shown */}
         <SeatDashboard
           onReserve={this.handleReserve}
           onSelectedSeatsChange={this.handleSelectedSeatsChange}
-          onSelectedSeatsChangeDetails={this.handleSelectedSeatsChangeDetails}
           reservedSeats={allReservedSeats}
         />
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -183,7 +204,6 @@ class App extends Component {
             reservedSeats={this.state.reservedSeats}
           />
         )}
-        {console.log("Records123:", records)}
         {activeTab === 'table' && (
           <ReservationTable records={records} />
         )}

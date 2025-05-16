@@ -42,10 +42,11 @@ function seatsToRangesByRow(seats) {
 }
 
 function formatRange(row, cols) {
+  const pad = n => n.toString().padStart(2, '0');
   if (cols.length === 1) {
-    return `${row}${cols[0]}`;
+    return `${row}${pad(cols[0])}`;
   } else {
-    return `${row}${cols[0]} - ${row}${cols[cols.length - 1]}`;
+    return `${row}${pad(cols[0])} - ${row}${pad(cols[cols.length - 1])}`;
   }
 }
 
@@ -60,13 +61,18 @@ router.post('/', async function(req, res, next)
       console.log("Received records:", records);
 
       records.forEach(record => {
-        const key = `${record.name}|${record.location}|${record.price}|${record.time}`;
+        const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
+            staffName: record.staffName,
             location: record.location,
             price: record.price,
             time: record.time,
+            paymentType: record.paymentType,
+            paymentRef: record.paymentRef,
+            selectedSeatsCount: record.selectedSeatsCount,
+            bookingNo: record.bookingNo,
             seats: []
           };
         }
@@ -81,9 +87,14 @@ router.post('/', async function(req, res, next)
       // Convert seats to ranges per row (array of ranges)
       const groupedRecords = Object.values(grouped).map(group => ({
         name: group.name,
+        staffName: group.staffName,
         location: group.location,
         price: group.price,
         time: group.time,
+        paymentType: group.paymentType,
+        paymentRef: group.paymentRef,
+        selectedSeatsCount: group.selectedSeatsCount,
+        bookingNo: group.bookingNo,
         seats: seatsToRangesByRow(group.seats)  // returns array of seat ranges per row
       }));
 
@@ -99,14 +110,21 @@ router.post('/', async function(req, res, next)
       const records = req.body.records;
       const grouped = {};
 
+      console.log("Received records for PDF generation:", records);
+
       records.forEach(record => {
-        const key = `${record.name}|${record.location}|${record.price}|${record.time}`;
+        const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
+            staffName: record.staffName,
             location: record.location,
             price: record.price,
             time: record.time,
+            paymentType: record.paymentType,
+            paymentRef: record.paymentRef,
+            selectedSeatsCount: record.selectedSeatsCount,
+            bookingNo: record.bookingNo,
             seats: []
           };
         }
@@ -119,9 +137,14 @@ router.post('/', async function(req, res, next)
 
       const groupedRecords = Object.values(grouped).map(group => ({
         name: group.name,
+        staffName: group.staffName,
         location: group.location,
         price: group.price,
         time: group.time,
+        paymentType: group.paymentType,
+        paymentRef: group.paymentRef,
+        selectedSeatsCount: group.selectedSeatsCount,
+        bookingNo: group.bookingNo,
         seats: seatsToRangesByRow(group.seats)
       }));
 

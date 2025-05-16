@@ -116,6 +116,14 @@
   outline: none;
 }
 
+/* Remove border/outline when button is clicked or focused */
+.seat:focus,
+.seat:active {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
 /* Consistent seat and legend icon size and gap */
 .seat,
 .legend-seat {
@@ -311,4 +319,10 @@
   padding: 12px 64px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   text-align: center;
+}
+
+.selected-seat-area {
+  box-shadow: 0 0 0 6px #00e67688; /* green glow */
+  border-radius: 12px;
+  z-index: 2;
 }

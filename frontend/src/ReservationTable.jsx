@@ -1,45 +1,11 @@
 import React, { Component } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-
-function seatsToRangesByRow(seats) {
-  if (!seats || seats.length === 0) return [];
-  const rows = {};
-  seats.forEach(seat => {
-    const row = seat[0];
-    const col = parseInt(seat.slice(1));
-    if (!rows[row]) rows[row] = [];
-    rows[row].push(col);
-  });
-  const ranges = [];
-  Object.keys(rows).sort().forEach(row => {
-    const cols = rows[row].sort((a, b) => a - b);
-    let tempGroup = [cols[0]];
-    for (let i = 1; i < cols.length; i++) {
-      if (cols[i] === cols[i - 1] + 1) {
-        tempGroup.push(cols[i]);
-      } else {
-        ranges.push(formatRange(row, tempGroup));
-        tempGroup = [cols[i]];
-      }
-    }
-    ranges.push(formatRange(row, tempGroup));
-  });
-  return ranges;
-}
-
-function formatRange(row, cols) {
-  if (cols.length === 1) return `${row}${cols[0]}`;
-  return `${row}${cols[0]}-${row}${cols[cols.length - 1]}`;
-}
 
 function groupRecords(records) {
   const grouped = {};
@@ -47,20 +13,27 @@ function groupRecords(records) {
     const key = `${rec.name}_${rec.location}_${rec.price}_${rec.time}`;
     if (!grouped[key]) {
       grouped[key] = {
+        _id: rec._id,
         id: idx + 1,
         name: rec.name,
+        staffName: rec.staffName,
         location: rec.location,
         price: rec.price,
+        paymentType: rec.paymentType,
+        paymentRef: rec.paymentRef,
+        selectedSeatsCount: rec.selectedSeatsCount,
+        bookingNo: rec.bookingNo,
         reservedAt: rec.time,
-        seats: [...rec.seats],
+        seats: Array.isArray(rec.seats)
+          ? rec.seats.map(seat => seat && seat.trim()).filter(Boolean).join(', ')
+          : typeof rec.seats === 'string'
+            ? rec.seats.split(',').map(s => s.trim()).filter(Boolean).join(', ')
+            : '',
       };
-    } else {
-      grouped[key].seats.push(...rec.seats);
     }
   });
   return Object.values(grouped).map(row => ({
-    ...row,
-    seats: seatsToRangesByRow(row.seats).join(', ')
+    ...row
   }));
 }
 
@@ -89,34 +62,80 @@ class ReservationTable extends Component {
       : records.filter(r => r.location === location);
     const rows = groupRecords(filteredRecords);
 
-    // Ensure Reserved At is last and price is formatted
+    // Export all columns
     const exportRows = rows.map(row => ({
       id: row.id,
       name: row.name,
+      staffName: row.staffName,
       location: row.location,
       price: typeof row.price === 'number'
         ? `$${row.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : row.price,
+      paymentType: row.paymentType,
+      paymentRef: row.paymentRef,
+      selectedSeatsCount: row.selectedSeatsCount,
+      bookingNo: row.bookingNo,
       seats: row.seats,
       reservedAt: row.reservedAt
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportRows);
-
-    // Set column widths for better visibility in Excel
-    worksheet['!cols'] = [
-      { wch: 8 },   // id
-      { wch: 25 },  // name
-      { wch: 20 },  // location
-      { wch: 15 },  // price
-      { wch: 30 },  // seats
-      { wch: 25 },  // reservedAt
+    // Define custom headers
+    const headers = [
+      '#',
+      'Name',
+      'Staff',
+      'Location',
+      'Donation Amount',
+      'Payment Type',
+      'Payment Ref',
+      'No. of Seats',
+      'Booking No',
+      'Seats',
+      'Reserved At'
     ];
+
+    // Create worksheet with custom headers
+    const worksheet = XLSX.utils.json_to_sheet(exportRows, { header: [
+      'id',
+      'name',
+      'staffName',
+      'location',
+      'price',
+      'paymentType',
+      'paymentRef',
+      'selectedSeatsCount',
+      'bookingNo',
+      'seats',
+      'reservedAt'
+    ]});
+
+    // Insert custom header row
+    XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+
+    // Auto-fit column widths
+    const wscols = headers.map((header, i) => {
+      // Find max length in this column (header or any cell)
+      const colData = [header, ...exportRows.map(row => {
+        const val = Object.values(row)[i];
+        return val ? val.toString() : '';
+      })];
+      const maxLen = Math.max(...colData.map(val => val.length));
+      return { wch: maxLen + 2 }; // +2 for padding
+    });
+    worksheet['!cols'] = wscols;
+
+    // Bold header row
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: C })];
+      if (cell && !cell.s) cell.s = {};
+      if (cell) cell.s.font = { bold: true };
+    }
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Reservations');
 
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array', cellStyles: true });
     const fileName = 'reservation_records.xlsx';
     saveAs(new Blob([excelBuffer], { type: 'application/octet-stream' }), fileName);
   };
@@ -134,27 +153,33 @@ class ReservationTable extends Component {
       : records.filter(r => r.location === location);
 
     const rows = groupRecords(filteredRecords);
+    console.log('Rows:', records);
 
     const columns = [
-      { field: 'id', headerName: '#', width: 70, headerAlign: 'center', align: 'center' },
-      { field: 'name', headerName: 'Name', width: 300, headerAlign: 'center', align: 'center' },
-      { field: 'location', headerName: 'Location', width: 300, headerAlign: 'center', align: 'center' },
+      { field: 'id', headerName: '#', width: 70, headerAlign: 'center', align: 'left' },
+      { field: 'name', headerName: 'Name', width: 300, headerAlign: 'center', align: 'left' },
+      { field: 'staffName', headerName: 'Staff', width: 300, headerAlign: 'center', align: 'left' },
+      { field: 'location', headerName: 'Location', width: 300, headerAlign: 'center', align: 'left' },
       { 
         field: 'price',
-        headerName: 'Price',
+        headerName: 'Donation Amount',
         headerAlign: 'center',
         width: 300,
-        align: 'center',
+        align: 'left',
         valueFormatter: (params) => {
-          const value = params.value;
+          const value = params;
           if (typeof value === 'number') {
             return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
           }
           return value;
         }
       },
-      { field: 'seats', headerName: 'Seats', width: 300, headerAlign: 'center', align: 'center' },
-      { field: 'reservedAt', headerName: 'Reserved At', width: 300, headerAlign: 'center', align: 'center' }, // now last
+      { field: 'paymentType', headerName: 'Payment Type', width: 300, headerAlign: 'center', align: 'left' },
+      { field: 'paymentRef', headerName: 'Payment Ref', width: 300, headerAlign: 'center', align: 'left' },
+      { field: 'selectedSeatsCount', headerName: 'No. of Seats', width: 300, headerAlign: 'center', align: 'left' },
+      { field: 'bookingNo', headerName: 'Booking No', width: 300, headerAlign: 'center', align: 'left' },
+      { field: 'seats', headerName: 'Seats', width: 800, headerAlign: 'center', align: 'left' },
+      { field: 'reservedAt', headerName: 'Reserved At', width: 380, headerAlign: 'center', align: 'left' },
     ];
 
     return (

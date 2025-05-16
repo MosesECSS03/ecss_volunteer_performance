@@ -27,21 +27,22 @@ const sectionColors = {
 }
 };
 
-const CinemaChairSVG = ({ fillColor, seatNumber, size = 200 }) => (
+
+const CinemaChairSVG = ({ fillColor, seatNumber, size = 300}) => (
   <svg
     width={size}
     height={size}
-    viewBox="0 0 80 80"
+    viewBox="0 0 80 80" // <-- FIXED: set to match your drawing coordinates
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect x="10" y="18" width="60" height="28" rx="8" fill="black" stroke="gray" strokeWidth="1.5" />
-    <rect x="10" y="50" width="60" height="28" rx="8" fill={fillColor} stroke="gray" strokeWidth="1.5" />
-    <rect x="2" y="50" width="8" height="28" fill="gray" />
-    <rect x="70" y="50" width="8" height="28" fill="gray" />
+    <rect x="10" y="50" width="60" height="28" rx="8" fill="black" stroke="gray" strokeWidth="1.5" />
+    <rect x="10" y="18" width="60" height="28" rx="8" fill={fillColor} stroke="gray" strokeWidth="1.5" />
+    <rect x="2" y="19" width="8" height="28" rx="6" fill="gray" />
+    <rect x="70" y="19" width="8" height="28" rx="6" fill="gray" />
     <text
       x="40"
       y="62"
-      fontSize="36" // 1.5rem ≈ 24px
+      fontSize="36"
       fontWeight="bold"
       textAnchor="middle"
       fill="white"
@@ -52,33 +53,49 @@ const CinemaChairSVG = ({ fillColor, seatNumber, size = 200 }) => (
   </svg>
 );
 
+const CinemaChairSVG1 = ({ fillColor, seatNumber, size = 120 }) => (
+  <div style={{ width: size, height: size / 2, display: 'flex'}}>
+    <svg
+      width={size/2}
+      height={size / 2}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="20" y="50" width="60" height="25" rx="10" fill="black" stroke="gray" strokeWidth="3" />
+      <rect x="20" y="10" width="60" height="35" rx="10" fill={fillColor} stroke="gray" strokeWidth="3" />
+      {/* Chair seat */}
+      <rect x="8" y="10" width="12" height="30" rx="6" fill="gray" />
+      <rect x="80" y="10" width="12" height="30" rx="6" fill="gray" />
+      {/* Seat label */}
+      <text
+        x="45"
+        y="30"
+        fontSize="35"
+        fontWeight="bold"
+        textAnchor="middle"
+        fill="white"
+        dominantBaseline="middle"
+        style={{ pointerEvents: 'none' }}
+      >
+        {seatNumber}
+      </text>
+    </svg>
+  </div>
+);
+
 class SeatDashboard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      seats: Array.from({ length: ROWS }, (_, row) =>
-        Array.from({ length: COLS }, (_, col) => {
-          // Reserve C8–C20 (row 0, col 7–19) and D8–D20 (row 1, col 7–19)
-          const isReserved = (
-            (row === 0 && col >= 7 && col <= 19) || // C8–C20
-            (row === 1 && col >= 7 && col <= 19)    // D8–D20
-          );
-          return {
-            row,
-            col,
-            reserved: isReserved,
-          };
-        })
-      ),
+      seats: [],
       selected: [],
     };
   }
 
-  // Divide columns into 3 sections: left, center, right
   getSectionForCol = (col) => {
-    if (col < 10) return SECTIONS[0]; // columns 0-9
-    if (col < 19) return SECTIONS[1]; // columns 10-18
-    return SECTIONS[2];               // columns 19-28
+    if (col < 10) return SECTIONS[0];
+    if (col < 19) return SECTIONS[1];
+    return SECTIONS[2];
   };
 
   getSectionForRow = (rowIdx) => {
@@ -86,34 +103,70 @@ class SeatDashboard extends Component {
     return SECTIONS[sectionIdx];
   };
 
-  getSeatLabel = (rowIdx, colIdx) => {
-    // C is 67 in ASCII, so row 0 = C, row 1 = D, etc.
-    return `${String.fromCharCode(67 + Number(rowIdx))}${Number(colIdx) + 1}`;
+  getSeatLabel = (row, col) => {
+    const rowLetter = String.fromCharCode(67 + Number(row)); // 65 = 'A'
+    const colNumber = (col + 1).toString().padStart(2, '0');
+    return `${rowLetter}${colNumber}`;
   };
 
-  handleSeatClick = (row, col) => {
-    row = row - 2;
-    console.log("Seat clicked:", row, col);
-    const { seats } = this.state;
-    if (seats[row][col].reserved) return;
-    const key = `${row}-${col}`;
-    this.setState(prevState => {
-      const selected = prevState.selected.includes(key)
-        ? prevState.selected.filter(k => k !== key)
-        : [...prevState.selected, key];
-      return { selected };
-    });
+  handleSeatClick = (seatLabel) => {
+    const { seats, selected } = this.state;
+    const { reservedSeats } = this.props;
+
+    // Find the seat object by label
+    let foundSeat = null;
+    for (let row of seats) {
+      for (let seat of row) {
+        if (this.getSeatLabel(seat.row, seat.col) === seatLabel) {
+          foundSeat = seat;
+          break;
+        }
+      }
+      if (foundSeat) break;
+    }
+
+    // If seat is reserved, do nothing
+    if (
+      (reservedSeats && reservedSeats.includes(seatLabel)) ||
+      (foundSeat && foundSeat.reserved)
+    ) return;
+
+    // Toggle selection in array
+    let newSelected;
+    if (selected.includes(seatLabel)) {
+      newSelected = selected.filter(label => label !== seatLabel);
+    } else {
+      newSelected = [...selected, seatLabel];
+    }
+    this.setState({ selected: newSelected });
+  };
+
+  handleRowClick = (rowIdx) => {
+    // Deselect any selected seat if row is clicked
+    this.setState({ selected: null });
   };
 
   render() {
-    const { seats, selected } = this.state;
-    const { reservedSeats } = this.props; // <-- get reservedSeats from props
+    const seats = [];
+    // Reserve middle section (cols 7-19) for first 2 rows (row 0 and 1)
+    for (let row = 0; row < ROWS; row++) {
+      const rowArr = [];
+      for (let col = 0; col < COLS; col++) {
+        const reserved = (row < 2) && (col >= 7 && col <= 19);
+        rowArr.push({ row, col, reserved });
+      }
+      seats.push(rowArr);
+    }
+
+    const { selected } = this.state;
+    const { reservedSeats } = this.props;
+
     return (
       <div className="dashboard-container">
         <h2 style={{fontSize: '3rem'}}>Seat Reservation Dashboard</h2>
         <button
           className="reserve-btn seat-action-gap"
-          onClick={() => this.props.onReserve(this.state.selected)}
+          onClick={() => this.props.onReserve(selected)}
           disabled={selected.length === 0}
           style={{
             fontSize: '1.5rem',
@@ -122,38 +175,57 @@ class SeatDashboard extends Component {
           Reserve Selected
         </button>
         <div className="seat-grid">
-          {/* Stage inside the seat grid */}
           <div className="stage-row">
             <div className="stage-label" style={{fontSize:"3rem"}}>STAGE</div>
           </div>
           {seats.map((rowArr, rowIdx) => {
-            let seatNum = 1;
             const section = this.getSectionForRow(rowIdx);
             return (
-              <div className="seat-row" key={rowIdx}>
+              <div
+                className="seat-row"
+                key={rowIdx}
+                onClick={() => this.handleRowClick(rowIdx)}
+                style={{ cursor: 'pointer' }}
+              >
                 {rowArr.map((seat, colIdx) => {
+                  const seatLabel = this.getSeatLabel(rowIdx, colIdx);
                   const isGap = colIdx === 6 || colIdx === 20;
                   if (isGap) {
                     return <div key={colIdx} className="seat empty-seat"></div>;
                   }
-                  const seatNumber = `${String.fromCharCode(67 + rowIdx)}${colIdx + 1}`;
-                  const key = `${rowIdx}-${colIdx}`;
-                  const seatLabel = this.getSeatLabel(rowIdx, colIdx);
-                  // A seat is reserved if it's in reservedSeats prop OR marked reserved in state
-                  const isReserved = (reservedSeats && reservedSeats.includes(seatLabel)) || seat.reserved;
-                  const seatColor = isReserved
-                    ? sectionColors[section].reserved
-                    : selected.includes(key)
-                    ? sectionColors[section].selected
-                    : sectionColors[section].available;
+                  // Mark as reserved if in reservedSeats prop or if reserved in seat object
+                  const isReserved =
+                    (reservedSeats && reservedSeats.includes(seatLabel)) ||
+                    seat.reserved;
+                  const isSelected = selected.includes(seatLabel);
+                  const seatColor = sectionColors[section]
+                    ? (isReserved
+                        ? sectionColors[section].reserved
+                        : isSelected
+                        ? sectionColors[section].selected
+                        : sectionColors[section].available)
+                    : "#888";
                   return (
                     <button
-                      key={key}
+                      key={seatLabel}
                       className="seat"
-                      onClick={() => this.handleSeatClick(rowIdx, colIdx)}
+                      onClick={
+                        !isReserved
+                          ? (e) => {
+                              e.stopPropagation();
+                              this.handleSeatClick(seatLabel);
+                            }
+                          : undefined
+                      }
                       disabled={isReserved}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: !isReserved ? 'pointer' : 'not-allowed'
+                      }}
                     >
-                      <CinemaChairSVG fillColor={seatColor} seatNumber={seatNumber} />
+                      <CinemaChairSVG1 fillColor={seatColor} seatNumber={seatLabel} />
                     </button>
                   );
                 })}
@@ -163,33 +235,23 @@ class SeatDashboard extends Component {
         </div>
         {/* Legend */}
         <div className="legend-container">
-          <h3 style={{ textAlign: 'center', marginBottom: 8,
-            fontSize: '1.5rem',
-          }}>Legend</h3>
+          <h3 style={{ textAlign: 'center', marginBottom: 8, fontSize: '1.5rem' }}>Legend</h3>
           <div className="legend-row-layout">
             {SECTIONS.map(section => (
               <div className="legend-section" key={section}>
-                <div className="legend-section-title" style={{
-            fontSize: '1.5rem',
-          }}>{section}</div>
+                <div className="legend-section-title" style={{ fontSize: '1.5rem' }}>{section}</div>
                 <div className="legend-icons-horizontal">
                   <div className="legend-item-horizontal">
                     <CinemaChairSVG fillColor={sectionColors[section].available} size={50} />
-                    <span style={{
-            fontSize: '1.5rem',
-          }}>Available</span>
+                    <span style={{ fontSize: '1.5rem' }}>Available</span>
                   </div>
                   <div className="legend-item-horizontal">
                     <CinemaChairSVG fillColor={sectionColors[section].selected} size={50} />
-                    <span style={{
-            fontSize: '1.5rem',
-          }}>Selected</span>
+                    <span style={{ fontSize: '1.5rem' }}>Selected</span>
                   </div>
                   <div className="legend-item-horizontal">
                     <CinemaChairSVG fillColor={sectionColors[section].reserved} size={50} />
-                    <span style={{
-            fontSize: '1.5rem',
-          }}>Reserved</span>
+                    <span style={{ fontSize: '1.5rem' }}>Reserved</span>
                   </div>
                 </div>
               </div>

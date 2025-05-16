@@ -8,13 +8,27 @@ const LOCATIONS = [
   "Tampines North Community Club"
 ];
 
+function formatSeatLabel(seat) {
+  // If already in format 'A01', return as is
+  if (/^[A-Z]\d{2}$/.test(seat)) return seat;
+  // If in format 'A1', pad the number
+  if (/^[A-Z]\d{1,2}$/.test(seat)) {
+    const row = seat[0];
+    const col = seat.slice(1).padStart(2, '0');
+    return `${row}${col}`;
+  }
+  return seat;
+}
+
 class RegistrationForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
       name: '',
       staffName: '',
-      location: LOCATIONS[0],
+      location: '',
+      paymentType: '',
+      paymentRef: '', // <-- add this
     };
   }
 
@@ -24,7 +38,9 @@ class RegistrationForm extends Component {
       this.setState({
         name: '',
         staffName: '',
-        location: LOCATIONS[0],
+        location: '',
+        paymentType: '', // reset to default value
+        paymentRef: '', // reset to default value
       });
     }
   }
@@ -37,31 +53,43 @@ class RegistrationForm extends Component {
     this.setState({ location: e.target.value });
   };
 
+  handlePaymentTypeChange = (e) => {
+    this.setState({ paymentType: e.target.value });
+  };
+
+  handlePaymentRefChange = (e) => {
+    this.setState({ paymentRef: e.target.value });
+  };
+
   handleSubmit = (e) => {
     e.preventDefault();
-    const { name, staffName, location } = this.state;
+    const { name, staffName, location, paymentType, paymentRef } = this.state;
     const { selectedSeatsCount, reservedSeats } = this.props;
-    console.log("Reserved Seats:", this.props)
+    console.log('Selected Seats123:', (reservedSeats || []).map(formatSeatLabel));
     const price = (selectedSeatsCount || 0) * 35;
-    if (!name || !staffName || !location || selectedSeatsCount === 0) return;
+    if (!name || !staffName || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
     this.props.onSubmit({
       name,
       staffName,
       location,
+      paymentType,
+      paymentRef,
       price,
       selectedSeatsCount,
-      seats: this.props.reservedSeats || [],
+      seats: (reservedSeats || []).map(formatSeatLabel),
     });
     // Reset form fields to default values
     this.setState({
       name: '',
       staffName: '',
-      location: LOCATIONS[0],
+      location: '',
+      paymentType: '', // reset to default value
+      paymentRef: '', // reset to default value
     });
   };
 
   render() {
-    const { name, staffName, location } = this.state;
+    const { name, staffName, location, paymentType, paymentRef } = this.state;
     const { selectedSeatsCount, reservedSeats } = this.props;
     const price = (selectedSeatsCount || 0) * 35;
 
@@ -109,15 +137,52 @@ class RegistrationForm extends Component {
             </span>
           ))}
         </div>
+        <div style={{ fontSize: '1.5rem', marginBottom: 12, display: 'flex', alignItems: 'center' }}>
+          <label style={{ marginRight: 12, fontWeight: 600 }}>Payment Method</label>
+          <label style={{ marginRight: 18, display: 'flex', alignItems: 'center' }}>
+            <input
+              type="radio"
+              name="paymentType"
+              value="Cash"
+              checked={paymentType === 'Cash'}
+              onChange={this.handlePaymentTypeChange}
+              style={{ width: 18, height: 18, marginRight: 6 }}
+            />
+            Cash
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              type="radio"
+              name="paymentType"
+              value="Paynow"
+              checked={paymentType === 'Paynow'}
+              onChange={this.handlePaymentTypeChange}
+              style={{ width: 18, height: 18, marginRight: 6 }}
+            />
+            Paynow
+          </label>
+        </div>
+        <label style={{ fontSize: '1.5rem' }}>
+          Payment reference
+          <input
+            type="text"
+            name="paymentRef"
+            value={paymentRef}
+            required
+            onChange={this.handlePaymentRefChange}
+            placeholder="Enter mobile number"
+            style={{ fontSize: '1.5rem' }}
+          />
+        </label>
         <div>
           <label style={{ fontSize: '1.5rem' }}>
-            Selected Seats Count:&nbsp;
+            Selected Seats Count&nbsp;
             <span style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{selectedSeatsCount}</span>
           </label>
         </div>
         <div>
           <label style={{ fontSize: '1.5rem' }}>
-            Total Price:&nbsp;
+            Total Price&nbsp;
             <span style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>${price}</span>
           </label>
         </div>
