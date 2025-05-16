@@ -1,44 +1,39 @@
-.table-scroll-container {
-  max-width: 100%;
-  max-height: 350px; /* Adjust height as needed */
-  overflow: auto;
-  margin: 0 auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  background: #fff;
+/* Make DataGrid header big and bold */
+.MuiDataGrid-columnHeaders {
+  background-color: #1976d2 !important;
+  color: #000000 !important;
+  font-size: 2rem !important;
+  font-weight: bold !important;
+  min-height: 4rem !important;
+  max-height: 4rem !important;
 }
 
-.records-table {
-  width: 100%;
-  min-width: 700px;
-  border-collapse: collapse;
-  background: #fff;
-  color: #222;
-  font-size: 16px;
+/* Make DataGrid cells large and readable */
+.MuiDataGrid-cell {
+  font-size: 1.7rem !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  align-items: center !important;
+  min-height: 4rem !important;
+  max-height: 4rem !important;
 }
 
-.records-table th,
-.records-table td {
-  border: 1px solid #e0e0e0;
-  padding: 10px 14px;
-  text-align: center;
+/* Make DataGrid rows tall */
+.MuiDataGrid-row {
+  min-height: 4rem !important;
+  max-height: 4rem !important;
 }
 
-.records-table th {
-  background: #1976d2;
-  color: #fff;
-  font-weight: bold;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  /* Add box-shadow for overlap effect */
-  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.15);
+/* Zebra striping for rows */
+.MuiDataGrid-row:nth-of-type(even) {
+  background-color: #e3eaf2 !important;
+}
+.MuiDataGrid-row:nth-of-type(odd) {
+  background-color: #f5f7fa !important;
 }
 
-.records-table tr:nth-child(even) {
-  background: #f5f7fa;
-}
-
-.records-table tr:nth-child(odd) {
-  background: #fff;
+/* Style for ID column */
+.id-column {
+  color: #ff5722 !important; /* Use any color you want */
+  font-weight: bold !important;
 }

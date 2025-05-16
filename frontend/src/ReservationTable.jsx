@@ -1,102 +1,122 @@
 import React, { Component } from 'react';
-import './ReservationTable.css';
+import { DataGrid } from '@mui/x-data-grid';
+import Box from '@mui/material/Box';
+
+function seatsToRangesByRow(seats) {
+  if (!seats || seats.length === 0) return [];
+  const rows = {};
+  seats.forEach(seat => {
+    const row = seat[0];
+    const col = parseInt(seat.slice(1));
+    if (!rows[row]) rows[row] = [];
+    rows[row].push(col);
+  });
+  const ranges = [];
+  Object.keys(rows).sort().forEach(row => {
+    const cols = rows[row].sort((a, b) => a - b);
+    let tempGroup = [cols[0]];
+    for (let i = 1; i < cols.length; i++) {
+      if (cols[i] === cols[i - 1] + 1) {
+        tempGroup.push(cols[i]);
+      } else {
+        ranges.push(formatRange(row, tempGroup));
+        tempGroup = [cols[i]];
+      }
+    }
+    ranges.push(formatRange(row, tempGroup));
+  });
+  return ranges;
+}
+
+function formatRange(row, cols) {
+  if (cols.length === 1) return `${row}${cols[0]}`;
+  return `${row}${cols[0]}-${row}${cols[cols.length - 1]}`;
+}
+
+function groupRecords(records) {
+  const grouped = {};
+  records.forEach((rec, idx) => {
+    const key = `${rec.name}_${rec.location}_${rec.price}_${rec.time}`;
+    if (!grouped[key]) {
+      grouped[key] = {
+        id: idx + 1,
+        name: rec.name,
+        location: rec.location,
+        price: rec.price,
+        reservedAt: rec.time,
+        seats: [...rec.seats],
+      };
+    } else {
+      grouped[key].seats.push(...rec.seats);
+    }
+  });
+  return Object.values(grouped).map(row => ({
+    ...row,
+    seats: seatsToRangesByRow(row.seats).join(', ')
+  }));
+}
 
 class ReservationTable extends Component {
-  groupRecords(records) {
-    const grouped = {};
-
-    records.forEach((rec) => {
-      const key = `${rec.name}_${rec.location}_${rec.price}`;
-      if (!grouped[key]) {
-        grouped[key] = {
-          name: rec.name,
-          location: rec.location,
-          price: rec.price,
-          reservedAt: rec.time,
-          seatsByRow: {}, // Organize by row
-        };
-      }
-
-      if (!grouped[key].seatsByRow[rec.row]) {
-        grouped[key].seatsByRow[rec.row] = [];
-      }
-
-      grouped[key].seatsByRow[rec.row].push(parseInt(rec.col));
-    });
-
-    // Format each group's seats into ranges like A1–A3
-    return Object.values(grouped).map(group => {
-      const formattedSeats = [];
-
-      Object.entries(group.seatsByRow).forEach(([row, cols]) => {
-        cols.sort((a, b) => a - b); // Sort column numbers
-        let start = cols[0];
-        let end = cols[0];
-
-        for (let i = 1; i < cols.length; i++) {
-          if (cols[i] === end + 1) {
-            end = cols[i];
-          } else {
-            formattedSeats.push(
-              start === end ? `${row}${start}` : `${row}${start}–${row}${end}`
-            );
-            start = cols[i];
-            end = cols[i];
-          }
-        }
-
-        // Add final range or single seat
-        formattedSeats.push(
-          start === end ? `${row}${start}` : `${row}${start} – ${row}${end}`
-        );
-      });
-
-      return {
-        ...group,
-        formattedSeats,
-      };
-    });
-  }
-
   render() {
-    const groupedRecords = this.groupRecords(this.props.records);
+    const rows = groupRecords(this.props.records);
+    console.log
+
+    const columns = [
+      { field: 'id', headerName: '#', width: 70, headerAlign: 'center', align: 'center' },
+      { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'center', align: 'center' },
+      { field: 'location', headerName: 'Location', flex: 1, headerAlign: 'center', align: 'center' },
+      { 
+        field: 'price',
+        headerName: 'Price',
+        flex: 1,
+        headerAlign: 'center',
+        align: 'center'
+      },
+      { field: 'seats', headerName: 'Seats', flex: 1.5, headerAlign: 'center', align: 'center' },
+      { field: 'reservedAt', headerName: 'Reserved At', flex: 1.5, headerAlign: 'center', align: 'center' },
+    ];
 
     return (
-      <div>
-        <h3>Reservation Records</h3>
-        <div className="table-scroll-container">
-          <table className="records-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Location</th>
-                <th>Price</th>
-                <th>Seats</th>
-                <th>Reserved At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupedRecords.length === 0 ? (
-                <tr>
-                  <td colSpan="6">No reservations yet.</td>
-                </tr>
-              ) : (
-                groupedRecords.map((rec, idx) => (
-                  <tr key={idx}>
-                    <td>{idx + 1}</td>
-                    <td>{rec.name}</td>
-                    <td>{rec.location}</td>
-                    <td>{rec.price ? `$${rec.price}` : ''}</td>
-                    <td>{rec.formattedSeats.join(', ')}</td>
-                    <td>{rec.reservedAt}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', my: 4 }}>
+        <h3 style={{ fontSize: '3rem', textAlign: 'center', marginBottom: 24 }}>Reservation Records</h3>
+        <div style={{ height: 500, width: '100%' }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            pageSize={10}
+            disableRowSelectionOnClick
+            style={{
+              fontSize: '1.7rem',
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: '#1976d2',
+                color: '#fff',
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                minHeight: '4rem',
+                maxHeight: '4rem',
+              },
+              '& .MuiDataGrid-cell': {
+                fontSize: '1.7rem',
+                fontWeight: 600,
+                textAlign: 'center',
+                alignItems: 'center',
+                minHeight: '4rem',
+                maxHeight: '4rem',
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: '4rem',
+                maxHeight: '4rem',
+              },
+              '& .MuiDataGrid-row:nth-of-type(even)': {
+                backgroundColor: '#e3eaf2',
+              },
+              '& .MuiDataGrid-row:nth-of-type(odd)': {
+                backgroundColor: '#f5f7fa',
+              },
+            }}
+          />
         </div>
-      </div>
+      </Box>
     );
   }
 }

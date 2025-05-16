@@ -1,63 +1,99 @@
 import React, { Component } from 'react';
 import './SeatDashboard.css';
 
-const ROWS = 12;
+const ROWS = 11;
 const COLS = 27;
+const SECTIONS = [
+  "CT Hub",
+  "Tampines 253 Centre and Tampines North Community Club",
+  "Pasir Ris West Wellness Centre"
+];
 
-// Simple AI: Suggests the best available seat (center-most, unreserved)
-function suggestBestSeats(seats, count = 1) {
-  const centerRow = Math.floor(ROWS / 2);
-  const centerCol = Math.floor(COLS / 2);
-  let best = [];
-  let minDist = Infinity;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (!seats[r][c].reserved) {
-        const dist = Math.abs(centerRow - r) + Math.abs(centerCol - c);
-        if (dist < minDist) {
-          best = [`${r}-${c}`];
-          minDist = dist;
-        }
-      }
-    }
-  }
-  return best;
+const sectionColors = {
+  "CT Hub": {
+    available: "#0d47a1",
+    selected: "#00e676", // bright green
+    reserved: "#b8860b"
+  },
+  "Tampines 253 Centre and Tampines North Community Club": {
+    available: "#4a148c",   // deep purple
+    selected:  "#8e24aa",   // violet
+    reserved:  "#b71c1c"    // dark red
+  },
+ "Pasir Ris West Wellness Centre": {
+  available: "#6d1b7b",   // dark magenta
+  selected:  "#283593",   // dark indigo
+  reserved:  "#f57c00"    // dark orange (distinct from red)
 }
+};
+
+const CinemaChairSVG = ({ fillColor, seatNumber, size = 200 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 80 80"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect x="10" y="18" width="60" height="28" rx="8" fill="black" stroke="gray" strokeWidth="1.5" />
+    <rect x="10" y="50" width="60" height="28" rx="8" fill={fillColor} stroke="gray" strokeWidth="1.5" />
+    <rect x="2" y="50" width="8" height="28" fill="gray" />
+    <rect x="70" y="50" width="8" height="28" fill="gray" />
+    <text
+      x="40"
+      y="62"
+      fontSize="36" // 1.5rem ≈ 24px
+      fontWeight="bold"
+      textAnchor="middle"
+      fill="white"
+      dominantBaseline="middle"
+    >
+      {seatNumber}
+    </text>
+  </svg>
+);
 
 class SeatDashboard extends Component {
   constructor(props) {
     super(props);
     this.state = {
       seats: Array.from({ length: ROWS }, (_, row) =>
-        Array.from({ length: COLS }, (_, col) => ({
-          row,
-          col,
-          reserved:
-            // A8–A20 (row 0, col 7–19) or B8–B20 (row 1, col 7–19)
-            ((row === 0 || row === 1) && col >= 7 && col <= 19),
-        }))
+        Array.from({ length: COLS }, (_, col) => {
+          // Reserve C8–C20 (row 0, col 7–19) and D8–D20 (row 1, col 7–19)
+          const isReserved = (
+            (row === 0 && col >= 7 && col <= 19) || // C8–C20
+            (row === 1 && col >= 7 && col <= 19)    // D8–D20
+          );
+          return {
+            row,
+            col,
+            reserved: isReserved,
+          };
+        })
       ),
       selected: [],
-      aiSuggestion: [],
-      showBottomLabels: true,
     };
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.onSelectedSeatsChangeDetails && prevState.selected !== this.state.selected) {
-      // Build seat objects for selected seats
-      const selectedSeats = this.state.selected.map(key => {
-        const [row, col] = key.split('-').map(Number);
-        return {
-          row: String.fromCharCode(65 + row),
-          col: col + 1,
-        };
-      });
-      this.props.onSelectedSeatsChangeDetails(selectedSeats);
-    }
-  }
+  // Divide columns into 3 sections: left, center, right
+  getSectionForCol = (col) => {
+    if (col < 10) return SECTIONS[0]; // columns 0-9
+    if (col < 19) return SECTIONS[1]; // columns 10-18
+    return SECTIONS[2];               // columns 19-28
+  };
+
+  getSectionForRow = (rowIdx) => {
+    const sectionIdx = Math.floor(rowIdx / 2) % SECTIONS.length;
+    return SECTIONS[sectionIdx];
+  };
+
+  getSeatLabel = (rowIdx, colIdx) => {
+    // C is 67 in ASCII, so row 0 = C, row 1 = D, etc.
+    return `${String.fromCharCode(67 + Number(rowIdx))}${Number(colIdx) + 1}`;
+  };
 
   handleSeatClick = (row, col) => {
+    row = row - 2;
+    console.log("Seat clicked:", row, col);
     const { seats } = this.state;
     if (seats[row][col].reserved) return;
     const key = `${row}-${col}`;
@@ -65,171 +101,100 @@ class SeatDashboard extends Component {
       const selected = prevState.selected.includes(key)
         ? prevState.selected.filter(k => k !== key)
         : [...prevState.selected, key];
-      // Notify parent about the new selected seats count
-      if (this.props.onSelectedSeatsChange) {
-        this.props.onSelectedSeatsChange(selected.length);
-      }
       return { selected };
     });
   };
 
-  handleReserve = () => {
-    this.setState(prevState => {
-      const reservedSeats = prevState.selected.map(key => {
-        const [row, col] = key.split('-').map(Number);
-        return {
-          row: String.fromCharCode(65 + row), // e.g., 'A'
-          col: col + 1, // 1-based seat number
-          time: new Date().toLocaleString(),
-          // Add more fields as needed (name, location, price) from form if available
-        };
-      });
-      if (this.props.onReserve) {
-        this.props.onReserve(reservedSeats);
-      }
-      const newSeats = prevState.seats.map((rowArr, row) =>
-        rowArr.map((seat, col) => {
-          const key = `${row}-${col}`;
-          if (prevState.selected.includes(key)) {
-            return { ...seat, reserved: true };
-          }
-          return seat;
-        })
-      );
-      return {
-        seats: newSeats,
-        selected: [],
-        aiSuggestion: [],
-      };
-    });
-  };
-
-  handleAISuggest = () => {
-    const { seats } = this.state;
-    const aiSuggestion = suggestBestSeats(seats, 1);
-    this.setState({ aiSuggestion, selected: aiSuggestion });
-    // Notify parent about the AI suggestion selection
-    if (this.props.onSelectedSeatsChange) {
-      this.props.onSelectedSeatsChange(aiSuggestion.length);
-    }
-  };
-
   render() {
-    const { seats, selected, aiSuggestion, showBottomLabels } = this.state;
+    const { seats, selected } = this.state;
+    const { reservedSeats } = this.props; // <-- get reservedSeats from props
     return (
       <div className="dashboard-container">
-        <h2>Seat Reservation Dashboard</h2>
-        <div className="seat-actions">
-          <button
-            className="reserve-btn"
-            onClick={this.handleReserve}
-            disabled={selected.length === 0}
-          >
-            Reserve Selected
-          </button>
-          <button className="ai-btn" onClick={this.handleAISuggest}>
-            AI Suggest Best Seat
-          </button>
-        </div>
-        <div className="seat-grid" role="grid" aria-label="Seat grid">
-          {/* Seat rows with row labels and seat labels */}
-          {seats.map((rowArr, rowIdx) => (
-            <div className="seat-row" key={rowIdx} role="row">
-              {/*<div className="seat-row-label">{String.fromCharCode(65 + rowIdx)}</div>*/}
-              {rowArr.map((seat, colIdx) => {
-                // Leave column 7 and 21 empty with a bigger gap
-                if (colIdx === 6 || colIdx === 20) {
+        <h2 style={{fontSize: '3rem'}}>Seat Reservation Dashboard</h2>
+        <button
+          className="reserve-btn seat-action-gap"
+          onClick={() => this.props.onReserve(this.state.selected)}
+          disabled={selected.length === 0}
+          style={{
+            fontSize: '1.5rem',
+          }}
+        >
+          Reserve Selected
+        </button>
+        <div className="seat-grid">
+          {/* Stage inside the seat grid */}
+          <div className="stage-row">
+            <div className="stage-label" style={{fontSize:"3rem"}}>STAGE</div>
+          </div>
+          {seats.map((rowArr, rowIdx) => {
+            let seatNum = 1;
+            const section = this.getSectionForRow(rowIdx);
+            return (
+              <div className="seat-row" key={rowIdx}>
+                {rowArr.map((seat, colIdx) => {
+                  const isGap = colIdx === 6 || colIdx === 20;
+                  if (isGap) {
+                    return <div key={colIdx} className="seat empty-seat"></div>;
+                  }
+                  const seatNumber = `${String.fromCharCode(67 + rowIdx)}${colIdx + 1}`;
+                  const key = `${rowIdx}-${colIdx}`;
+                  const seatLabel = this.getSeatLabel(rowIdx, colIdx);
+                  // A seat is reserved if it's in reservedSeats prop OR marked reserved in state
+                  const isReserved = (reservedSeats && reservedSeats.includes(seatLabel)) || seat.reserved;
+                  const seatColor = isReserved
+                    ? sectionColors[section].reserved
+                    : selected.includes(key)
+                    ? sectionColors[section].selected
+                    : sectionColors[section].available;
                   return (
-                    <span
-                      key={`gap-${rowIdx}-${colIdx}`}
-                      style={{
-                        display: 'inline-block',
-                        width: '40px', // or larger than seat width for a bigger gap
-                        height: '32px',
-                      }}
-                    />
+                    <button
+                      key={key}
+                      className="seat"
+                      onClick={() => this.handleSeatClick(rowIdx, colIdx)}
+                      disabled={isReserved}
+                    >
+                      <CinemaChairSVG fillColor={seatColor} seatNumber={seatNumber} />
+                    </button>
                   );
-                }
-                const key = `${rowIdx}-${colIdx}`;
-                let className = 'seat';
-                if (seat.reserved) className += ' reserved';
-                else if (selected.includes(key)) className += ' selected';
-                if (aiSuggestion.includes(key)) className += ' ai-suggested';
-                return (
-                  <button
-                    key={key}
-                    className={className}
-                    onClick={() => this.handleSeatClick(rowIdx, colIdx)}
-                    disabled={seat.reserved}
-                    title={`Row ${String.fromCharCode(65 + rowIdx)}, Seat ${colIdx + 1}`}
-                    aria-label={`Row ${String.fromCharCode(65 + rowIdx)}, Seat ${colIdx + 1}${seat.reserved ? ' (reserved)' : ''}`}
-                    role="gridcell"
-                  >
-                    <span className="seat-icon" aria-hidden="true">
-                      {/* Simple seat SVG */}
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <rect x="5" y="10" width="14" height="7" rx="2" fill="currentColor"/>
-                        <rect x="7" y="5" width="10" height="7" rx="2" fill="currentColor" opacity="0.7"/>
-                      </svg>
-                    </span>
-                    <span className="seat-label">{`${String.fromCharCode(65 + rowIdx)}${colIdx + 1}`}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-          {/* Bottom column label row - only show after reserve */}
-          {/*showBottomLabels && (
-            <div className="seat-grid-label-row">
-              <div className="seat-row-label" style={{ visibility: 'hidden' }}></div>
-              {Array.from({ length: COLS }, (_, colIdx) => (
-                <div
-                  key={colIdx}
-                  className="seat-col-label" // <-- Use a different class here
-                >
-                  {colIdx + 1}
-                </div>
-              ))}
-            </div>
-          )*/}
+                })}
+              </div>
+            );
+          })}
         </div>
-        <div className="legend">
-          <span>
-            <span className="legend-seat legend-available">
-              <svg width="24" height="24" viewBox="0 0 32 32">
-                <rect x="4" y="10" width="24" height="14" rx="6" fill="#3a86ff"/>
-                <rect x="8" y="4" width="16" height="10" rx="5" fill="#bde0fe"/>
-              </svg>
-            </span>
-            Available
-          </span>
-          <span>
-            <span className="legend-seat legend-selected">
-              <svg width="24" height="24" viewBox="0 0 32 32">
-                <rect x="4" y="10" width="24" height="14" rx="6" fill="#00b894"/>
-                <rect x="8" y="4" width="16" height="10" rx="5" fill="#a7ffeb"/>
-              </svg>
-            </span>
-            Selected
-          </span>
-          <span>
-            <span className="legend-seat legend-reserved">
-              <svg width="24" height="24" viewBox="0 0 32 32">
-                <rect x="4" y="10" width="24" height="14" rx="6" fill="#999"/>
-                <rect x="8" y="4" width="16" height="10" rx="5" fill="#f1c40f"/>
-              </svg>
-            </span>
-            Reserved
-          </span>
-          <span>
-            <span className="legend-seat legend-ai">
-              <svg width="24" height="24" viewBox="0 0 32 32">
-                <rect x="4" y="10" width="24" height="14" rx="6" fill="#8e44ad"/>
-                <rect x="8" y="4" width="16" height="10" rx="5" fill="#d6b3ff"/>
-              </svg>
-            </span>
-            AI Suggestion
-          </span>
+        {/* Legend */}
+        <div className="legend-container">
+          <h3 style={{ textAlign: 'center', marginBottom: 8,
+            fontSize: '1.5rem',
+          }}>Legend</h3>
+          <div className="legend-row-layout">
+            {SECTIONS.map(section => (
+              <div className="legend-section" key={section}>
+                <div className="legend-section-title" style={{
+            fontSize: '1.5rem',
+          }}>{section}</div>
+                <div className="legend-icons-horizontal">
+                  <div className="legend-item-horizontal">
+                    <CinemaChairSVG fillColor={sectionColors[section].available} size={50} />
+                    <span style={{
+            fontSize: '1.5rem',
+          }}>Available</span>
+                  </div>
+                  <div className="legend-item-horizontal">
+                    <CinemaChairSVG fillColor={sectionColors[section].selected} size={50} />
+                    <span style={{
+            fontSize: '1.5rem',
+          }}>Selected</span>
+                  </div>
+                  <div className="legend-item-horizontal">
+                    <CinemaChairSVG fillColor={sectionColors[section].reserved} size={50} />
+                    <span style={{
+            fontSize: '1.5rem',
+          }}>Reserved</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

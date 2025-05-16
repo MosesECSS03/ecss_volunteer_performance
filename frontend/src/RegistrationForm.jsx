@@ -67,8 +67,8 @@ class RegistrationForm extends Component {
 
     return (
       <form className="reservation-form" onSubmit={this.handleSubmit}>
-        <h3>Registration Details</h3>
-        <label>
+        <h3 style={{ fontSize: '3rem' }}>Registration Details</h3>
+        <label style={{ fontSize: '1.5rem' }}>
           Name
           <input
             type="text"
@@ -77,9 +77,10 @@ class RegistrationForm extends Component {
             required
             onChange={this.handleChange}
             placeholder="Enter name"
+            style={{ fontSize: '1.5rem' }}
           />
         </label>
-        <label>
+        <label style={{ fontSize: '1.5rem' }}>
           Staff Name
           <input
             type="text"
@@ -88,12 +89,13 @@ class RegistrationForm extends Component {
             required
             onChange={this.handleChange}
             placeholder="Enter staff name"
+            style={{ fontSize: '1.5rem' }}
           />
         </label>
-        <div className="location-radio-row">
+        <div className="location-radio-row" style={{ fontSize: '1.5rem' }}>
           <span className="info-label" style={{ marginRight: 12 }}>Location</span>
           {LOCATIONS.map(loc => (
-            <span key={loc} className="location-radio-label">
+            <span key={loc} className="location-radio-label" style={{ fontSize: '1.5rem' }}>
               <input
                 type="radio"
                 name="location"
@@ -101,24 +103,25 @@ class RegistrationForm extends Component {
                 checked={location === loc}
                 onChange={this.handleLocationChange}
                 required
+                style={{ width: 18, height: 18 }}
               />
-              <label style={{ margin: 0 }}>{loc}</label>
+              <label style={{ margin: 0, fontSize: '1.5rem' }}>{loc}</label>
             </span>
           ))}
         </div>
         <div>
-          <label>
+          <label style={{ fontSize: '1.5rem' }}>
             Selected Seats Count:&nbsp;
-            <span style={{ fontWeight: 'bold' }}>{selectedSeatsCount}</span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{selectedSeatsCount}</span>
           </label>
         </div>
         <div>
-          <label>
+          <label style={{ fontSize: '1.5rem' }}>
             Total Price:&nbsp;
-            <span style={{ fontWeight: 'bold' }}>${price}</span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>${price}</span>
           </label>
         </div>
-        <button type="submit" disabled={selectedSeatsCount === 0}>
+        <button type="submit" disabled={selectedSeatsCount === 0} style={{ fontSize: '1.5rem', padding: '10px 24px' }}>
           Submit
         </button>
       </form>

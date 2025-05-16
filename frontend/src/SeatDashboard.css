@@ -12,33 +12,39 @@
   justify-content: center;
 }
 
+.seat-action-gap {
+  margin-bottom: 18px;
+}
+
 .seat-grid {
   display: flex;
   flex-direction: column;
   gap: 1px;
   margin-bottom: 20px;
-  /*border: 1px solid #e0e0e0;*/
   background: #006400;
   border-radius: 8px;
   padding: 0;
   width: 100%;
-  min-width: 0;
   max-width: 95vw;
   overflow-x: auto;
   box-sizing: border-box;
 }
 
-/* Make the row and label row fit content so they scroll horizontally */
 .seat-grid-label-row,
 .seat-row {
   display: flex;
   align-items: center;
-  min-width: max-content; /* Allow horizontal scrolling */
+  min-width: max-content;
 }
 
 .seat-row {
-  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  min-width: max-content;
+  width: 100%;
+  justify-content: space-between; /* Spread seats evenly */
 }
+
 .seat-row:last-child {
   margin-bottom: 0;
 }
@@ -59,69 +65,77 @@
   border-radius: 4px;
 }
 
-.seat-grid-label-cell,
-.seat-row-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  box-sizing: border-box;
-  margin: 0;
-  border-radius: 4px;
-}
-
-/* Add horizontal gap between all cells except the first */
-.seat-grid-label-row > *:not(:first-child),
-.seat-row > *:not(:first-child) {
-  margin-left: 4px;
-}
-
-.seat-grid-label-cell {
-  color: #1976d2;
-  background: #e3eafc;
-}
-
-.seat-row-label {
-  color: #1976d2;
-  background: #e3eafc;
-}
-
-/* Default seat */
-.seat {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  border: none;
-  background: none;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-}
-
-/* Remove background from seat and legend seat boxes */
-.seat,
-.legend-available,
-.legend-selected,
-.legend-reserved,
-.legend-ai {
-  background: none !important;
-}
-
-/* Seat logo as a single SVG background */
-.seat::before {
+/* Apply section colors correctly while keeping SVG styling */
+.seat-row:nth-child(6n+1) .seat::before { /* CT Hub */
   content: "";
   display: block;
   position: absolute;
   inset: 0;
-  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%233a86ff"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23bde0fe"/></svg>') center/contain no-repeat;
-  z-index: 1;
+  background: url('data:image/svg+xml;utf8,\
+    <svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="10" width="24" height="14" rx="6" fill="%233a86ff"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23bde0fe"/></svg>')
+    center/contain no-repeat;
+}
+
+.seat-row:nth-child(6n+3) .seat::before { /* Tampines */
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: url('data:image/svg+xml;utf8,\
+    <svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="10" width="24" height="14" rx="6" fill="%23ff5733"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23ffc300"/></svg>')
+    center/contain no-repeat;
+}
+
+.seat-row:nth-child(6n+5) .seat::before { /* Pasir Ris */
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: url('data:image/svg+xml;utf8,\
+    <svg width="32" height="32" viewBox="0 0 32 32"><rect x="4" y="10" width="24" height="14" rx="6" fill="%23845ec2"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23d5aaff"/></svg>')
+    center/contain no-repeat;
+}
+
+/* Default seat */
+.seat {
+  flex: 1 1 0;
+  max-width: 96px;   /* or your SVG width */
+  min-width: 0;
+  margin: 8px 2px;   /* small horizontal gap, keep vertical gap */
+  width: 100%;
+  height: 96px;      /* match your SVG height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Consistent seat and legend icon size and gap */
+.seat,
+.legend-seat {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;   /* horizontal gap */
+  margin-bottom: 6px;  /* vertical gap if needed */
+  padding: 0;
+  background: none;
+  border: none;
+  box-sizing: border-box;
+}
+
+/* Remove background from legend icons if using SVG */
+.legend-seat {
+  background: none !important;
+  border: none !important;
 }
 
 /* Overlapping seat label */
@@ -129,148 +143,50 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  z-index: 2;
   transform: translate(-50%, -50%);
   font-size: 11px;
   font-weight: bold;
-  color: #222; /* Dark font for light seat */
+  color: #222;
   pointer-events: none;
   text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
 }
 
-/* Selected seat: blue-green, white font */
-.seat.selected::before {
-  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%2300b894"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23a7ffeb"/></svg>') center/contain no-repeat;
+/* Legend color updates */
+.legend-ct-hub-available {
+  background: #3a86ff;
 }
-.seat.selected .seat-label {
-  color: #fff;
-  text-shadow: 0 1px 2px #00695c, 0 0 2px #00695c;
+.legend-ct-hub-selected {
+  background: #00b894;
 }
-
-/* Reserved seat: gray, yellow font */
-.seat.reserved::before {
-  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%23999"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23f1c40f"/></svg>') center/contain no-repeat;
-}
-.seat.reserved .seat-label {
-  color: #f1c40f;
-  text-shadow: 0 1px 2px #444, 0 0 2px #444;
+.legend-ct-hub-reserved {
+  background: #999;
 }
 
-/* AI-suggested seat: purple, white font */
-.seat.ai-suggested::before {
-  background: url('data:image/svg+xml;utf8,<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="24" height="14" rx="6" fill="%238e44ad"/><rect x="8" y="4" width="16" height="10" rx="5" fill="%23d6b3ff"/></svg>') center/contain no-repeat;
+.legend-tampines-available {
+  background: #ff5733;
 }
-.seat.ai-suggested .seat-label {
-  color: #fff;
-  text-shadow: 0 1px 2px #6c3483, 0 0 2px #6c3483;
+.legend-tampines-selected {
+  background: #ffc300;
 }
-
-/* --- Seat and Legend: Available --- */
-.seat,
-.legend-available {
-  background: #e3eafc;
-  color: #1976d2;
-  border: none;
-}
-.seat .seat-label,
-.legend-available {
-  color: #1976d2;
-  text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
+.legend-tampines-reserved {
+  background: #6c757d;
 }
 
-/* --- Seat and Legend: Selected --- */
-.seat.selected,
-.legend-selected {
-  background: #1976d2;
-  color: #fff;
-  border: none;
+.legend-pasir-ris-available {
+  background: #845ec2;
 }
-.seat.selected .seat-label,
-.legend-selected {
-  color: #fff;
-  text-shadow: 0 1px 2px #1565c0, 0 0 2px #1565c0;
+.legend-pasir-ris-selected {
+  background: #ff6f91;
+}
+.legend-pasir-ris-reserved {
+  background: #2a2a2a;
 }
 
-/* --- Seat and Legend: Reserved --- */
-.seat.reserved,
-.legend-reserved {
-  background: #bdbdbd;
-  color: #fff;
-  border: none;
-}
-.seat.reserved .seat-label,
-.legend-reserved {
-  color: #fff;
-  text-shadow: 0 1px 2px #757575, 0 0 2px #757575;
-}
-
-/* --- Seat and Legend: AI Suggested --- */
-.seat.ai-suggested,
-.legend-ai {
-  background: #ffeb3b;
-  color: #333;
-  border: none;
-}
-.seat.ai-suggested .seat-label,
-.legend-ai {
-  color: #333;
-  text-shadow: 0 1px 2px #fffde7, 0 0 2px #fffde7;
-}
-
-/* Legend seat box style */
-.legend .seat,
-.legend-available,
-.legend-selected,
-.legend-reserved,
-.legend-ai {
-  display: inline-block;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  margin-right: 6px;
-  vertical-align: middle;
-  font-weight: bold;
-  font-size: 14px;
-  text-align: center;
-  line-height: 32px;
-  box-sizing: border-box;
-}
-
-/* Legend seat icon style */
-.legend-seat {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  margin-right: 6px;
-  vertical-align: middle;
-  border: 2px solid transparent;
-  background: none;
-  box-sizing: border-box;
-}
-
-/* Match seat border color for each status */
-.legend-available { border-color: #1976d2; }
-.legend-selected  { border-color: #1565c0; }
-.legend-reserved  { border-color: #757575; }
-.legend-ai        { border-color: #fbc02d; }
-
-/* Remove old legend backgrounds and borders */
-.legend-available,
-.legend-selected,
-.legend-reserved,
-.legend-ai {
-  background: none !important;
-  border: none !important;
-}
-
+/* Buttons */
 .reserve-btn, .ai-btn {
   padding: 10px 24px;
   background: #43a047;
   color: #fff;
-  border: none;
   border-radius: 6px;
   font-size: 16px;
   cursor: pointer;
@@ -287,18 +203,13 @@
   cursor: not-allowed;
 }
 
+/* For legend row gap */
 .legend {
   margin-top: 16px;
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 6px;
   font-size: 14px;
-}
-
-.legend .seat {
-  display: inline-block;
-  margin-right: 6px;
-  vertical-align: middle;
 }
 
 .seat-col-label {
@@ -316,35 +227,12 @@
   background: #1976d2;
 }
 
-/* Add horizontal gap between column labels, but not before the first */
-.seat-grid-label-row > .seat-col-label:not(:first-child) {
-  margin-left: 4px; /* Adjust gap size as needed */
-}
-
-/* Legend styles - use distinct colors from the seat grid */
-.legend-available {
-  background: #b2dfdb;   /* Teal */
-  border: 1px solid #009688;
-}
-
-.legend-selected {
-  background: #ffd54f;   /* Amber */
-  border: 1px solid #ffa000;
-}
-
-.legend-reserved {
-  background: #ef9a9a;   /* Light red */
-  border: 1px solid #c62828;
-}
-
-.legend-ai {
-  background: #90caf9;   /* Light blue */
-  border: 1px solid #1976d2;
-}
-
 /* Responsive for mobile */
 @media (max-width: 600px) {
-  .seat, .seat-row-label, .seat-grid-label-cell, .seat-col-label {
+  .seat,
+  .seat-row-label,
+  .seat-grid-label-cell,
+  .seat-col-label {
     width: 28px;
     height: 28px;
     font-size: 10px;
@@ -352,4 +240,75 @@
   .seat-grid {
     padding: 0;
   }
+}
+
+/* Legend row layout */
+.legend-row-layout {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  margin-bottom: 8px;
+}
+.legend-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.legend-section-title {
+  font-size: 16px;
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.legend-icons-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.legend-item-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  font-size: 14px;
+  gap: 2px;
+}
+.legend-icons-horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.legend-item-horizontal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+  font-size: 14px;
+  gap: 2px;
+}
+
+/* Stage container and label */
+.stage-container {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 16px 0;
+}
+.stage-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.stage-label {
+  background: #444;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.3rem;
+  letter-spacing: 0.2em;
+  border-radius: 12px 12px 18px 18px;
+  padding: 12px 64px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  text-align: center;
 }
