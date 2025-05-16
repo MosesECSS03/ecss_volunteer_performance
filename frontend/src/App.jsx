@@ -32,21 +32,35 @@ class App extends Component {
   handleAddRecords = async (formData) => {
     console.log("Form Data:", formData);
 
-
-    // Create a single record with all seat labels
     const seatRecord = {
       name: formData.name,
       location: formData.location,
       price: formData.price,
       seats: formData.seats,
-      time: getFormattedDateTime(), // <-- formatted as dd/mm/yyyy hh:mm:ss
+      time: getFormattedDateTime(),
     };
 
     try {
-      const response = await axios.post('http://localhost:3001/ticketSales', { purpose: "insert", records: [seatRecord] });
-      console.log('✅ Records saved:', response.data.success);
+      // 1. Insert the record
+      const insertResponse = await axios.post('http://localhost:3001/ticketSales', { purpose: "insert", records: [seatRecord] });
 
-      if (response.data.success) {
+      if (insertResponse.data.success) {
+        // 2. Generate the PDF (assume you have a separate endpoint for this)
+        const pdfResponse = await axios.post('http://localhost:3001/ticketSales', { purpose: "generate", records: [seatRecord] });
+
+        if (pdfResponse.data.receiptPdfBase64) {
+          const base64 = pdfResponse.data.receiptPdfBase64;
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+        }
+
         this.setState(prevState => ({
           records: [...prevState.records, seatRecord],
           selectedSeatsCount: 0,

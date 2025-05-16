@@ -14,9 +14,9 @@ class TicketSalesController
                 var databaseName = "Performance-Night-2025";
                 var collectionName = "ticket_sales";
                 var connectedDatabase = await this.databaseConnectivity.insertToDatabase(databaseName, collectionName, groupedRecords);
+                console.log("Connected Database:", connectedDatabase);
                 
-                if(connectedDatabase === true)
-                {
+                if (connectedDatabase.acknowledged === true) {
                     return {
                         success: true,
                         message: "New sales records created successfully",
@@ -43,11 +43,11 @@ class TicketSalesController
             var result = await this.databaseConnectivity.initialize();
             console.log("Database Connectivity:", result);
             if (result === "Connected to MongoDB Atlas!") {
-                var databaseName = "Performance-Night-2025";
-                var collectionName = "ticket_sales";
+                var databaseName = "Performance-Night-2025";  
+                var collectionName = "ticket_sales";          
                 var connectedDatabase = await this.databaseConnectivity.retrieveFromDatabase(databaseName, collectionName);
                 console.log("Connected Database:", connectedDatabase);
-                
+                   
                 if(connectedDatabase.acknowledged === true)
                 {
                     return {

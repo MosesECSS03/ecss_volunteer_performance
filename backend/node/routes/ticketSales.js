@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var TicketSalesController = require('../Controller/TicketSales/TicketSalesController'); 
+var receiptGenerator = require("../Others/Pdf/receiptGenerated"); // Import the receipt generator utility
 
 function seatsToRangesByRow(seats) {
   if (!seats || seats.length === 0) return [];
@@ -90,15 +91,50 @@ router.post('/', async function(req, res, next)
       var controller = new TicketSalesController();
       console.log("Grouped Records:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
-      // Send JSON response
-      return res.json({ success: true, result });
+      return res.json({ success: true, ...result });
+    }
+    else if(req.body.purpose === "generate") 
+    {
+      // Only generate PDF, do not insert
+      const records = req.body.records;
+      const grouped = {};
+
+      records.forEach(record => {
+        const key = `${record.name}|${record.location}|${record.price}|${record.time}`;
+        if (!grouped[key]) {
+          grouped[key] = {
+            name: record.name,
+            location: record.location,
+            price: record.price,
+            time: record.time,
+            seats: []
+          };
+        }
+        if (Array.isArray(record.seats)) {
+          record.seats.forEach(seatLabel => {
+            grouped[key].seats.push(seatLabel);
+          });
+        }
+      });
+
+      const groupedRecords = Object.values(grouped).map(group => ({
+        name: group.name,
+        location: group.location,
+        price: group.price,
+        time: group.time,
+        seats: seatsToRangesByRow(group.seats)
+      }));
+
+      // Generate PDF only (not insert)
+      const pdfBuffer = await receiptGenerator.generate(groupedRecords);
+      const pdfBase64 = pdfBuffer.toString('base64');
+      return res.json({ success: true, receiptPdfBase64: pdfBase64 });
     }
     else if(req.body.purpose === "retrieve") 
     {
       // Instantiate controller and retrieve records
       var controller = new TicketSalesController();
       var result = await controller.getSalesRecords();
-      // Send JSON response
       return res.json({result});
     }
   } 
