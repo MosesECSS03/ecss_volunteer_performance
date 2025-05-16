@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vite test",
-    "eject": "vite eject"
+    "eject": "vite eject",
+    "test:run": "npm run test --if-present"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
