@@ -3,30 +3,12 @@ import './SeatDashboard.css';
 
 const ROWS = 11;
 const COLS = 27;
-const SECTIONS = [
-  "CT Hub",
-  "Tampines 253 Centre and Tampines North Community Club",
-  "Pasir Ris West Wellness Centre"
-];
 
 const sectionColors = {
-  "CT Hub": {
-    available: "#0d47a1",
-    selected: "#00e676", // bright green
-    reserved: "#b8860b"
-  },
-  "Tampines 253 Centre and Tampines North Community Club": {
-    available: "#4a148c",   // deep purple
-    selected:  "#8e24aa",   // violet
-    reserved:  "#b71c1c"    // dark red
-  },
- "Pasir Ris West Wellness Centre": {
-  available: "#6d1b7b",   // dark magenta
-  selected:  "#283593",   // dark indigo
-  reserved:  "#f57c00"    // dark orange (distinct from red)
-}
+  available: "rgb(0, 79, 140)",      // maroon (dark, not red)
+  selected: "rgb(93, 80, 35)",       // dark goldenrod (gold/yellow)
+  reserved: "rgb(126, 0, 0)"         // dark blue
 };
-
 
 const CinemaChairSVG = ({ fillColor, seatNumber, size = 300}) => (
   <svg
@@ -83,6 +65,41 @@ const CinemaChairSVG1 = ({ fillColor, seatNumber, size = 120 }) => (
   </div>
 );
 
+// Group rows in pairs and cycle through locations
+const rowLocationCycle = [
+  "CT Hub",
+  "Tampines 253 Centre and Tampines North Community Club",
+  "Pasir Ris West Wellness Centre"
+];
+
+const rowLocationGroupsRaw = [];
+for (let i = 0; i < ROWS; i += 2) {
+  const start = i + 1;
+  const end = Math.min(i + 2, ROWS);
+  const name = rowLocationCycle[Math.floor(i / 2) % rowLocationCycle.length];
+  rowLocationGroupsRaw.push({
+    range: end !== start ? `${start}-${end}` : `${start}`,
+    name
+  });
+}
+
+// Group ranges by location name
+const rowLocationGroups = rowLocationGroupsRaw.reduce((acc, curr) => {
+  const found = acc.find(g => g.name === curr.name);
+  if (found) {
+    found.ranges.push(curr.range);
+  } else {
+    acc.push({ name: curr.name, ranges: [curr.range] });
+  }
+  return acc;
+}, []);
+
+function rowNumberToLetter(rowNum) {
+  // Your rows start from 1, and you want C for 1, D for 2, etc.
+  // So: 1 -> C, 2 -> D, 3 -> E, ...
+  return String.fromCharCode(67 + rowNum); // 65 = 'A'
+}
+
 class SeatDashboard extends Component {
   constructor(props) {
     super(props);
@@ -91,17 +108,6 @@ class SeatDashboard extends Component {
       selected: [],
     };
   }
-
-  getSectionForCol = (col) => {
-    if (col < 10) return SECTIONS[0];
-    if (col < 19) return SECTIONS[1];
-    return SECTIONS[2];
-  };
-
-  getSectionForRow = (rowIdx) => {
-    const sectionIdx = Math.floor(rowIdx / 2) % SECTIONS.length;
-    return SECTIONS[sectionIdx];
-  };
 
   getSeatLabel = (row, col) => {
     const rowLetter = String.fromCharCode(67 + Number(row)); // 65 = 'A'
@@ -148,7 +154,6 @@ class SeatDashboard extends Component {
 
   render() {
     const seats = [];
-    // Reserve middle section (cols 7-19) for first 2 rows (row 0 and 1)
     for (let row = 0; row < ROWS; row++) {
       const rowArr = [];
       for (let col = 0; col < COLS; col++) {
@@ -178,84 +183,124 @@ class SeatDashboard extends Component {
           <div className="stage-row">
             <div className="stage-label" style={{fontSize:"3rem"}}>STAGE</div>
           </div>
-          {seats.map((rowArr, rowIdx) => {
-            const section = this.getSectionForRow(rowIdx);
-            return (
-              <div
-                className="seat-row"
-                key={rowIdx}
-                onClick={() => this.handleRowClick(rowIdx)}
-                style={{ cursor: 'pointer' }}
-              >
-                {rowArr.map((seat, colIdx) => {
-                  const seatLabel = this.getSeatLabel(rowIdx, colIdx);
-                  const isGap = colIdx === 6 || colIdx === 20;
-                  if (isGap) {
-                    return <div key={colIdx} className="seat empty-seat"></div>;
-                  }
-                  // Mark as reserved if in reservedSeats prop or if reserved in seat object
-                  const isReserved =
-                    (reservedSeats && reservedSeats.includes(seatLabel)) ||
-                    seat.reserved;
-                  const isSelected = selected.includes(seatLabel);
-                  const seatColor = sectionColors[section]
-                    ? (isReserved
-                        ? sectionColors[section].reserved
-                        : isSelected
-                        ? sectionColors[section].selected
-                        : sectionColors[section].available)
-                    : "#888";
-                  return (
-                    <button
-                      key={seatLabel}
-                      className="seat"
-                      onClick={
-                        !isReserved
-                          ? (e) => {
-                              e.stopPropagation();
-                              this.handleSeatClick(seatLabel);
-                            }
-                          : undefined
-                      }
-                      disabled={isReserved}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        cursor: !isReserved ? 'pointer' : 'not-allowed'
-                      }}
-                    >
-                      <CinemaChairSVG1 fillColor={seatColor} seatNumber={seatLabel} />
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
+          {seats.map((rowArr, rowIdx) => (
+            <div
+              className="seat-row"
+              key={rowIdx}
+              onClick={() => this.handleRowClick(rowIdx)}
+              style={{ cursor: 'pointer' }}
+            >
+              {rowArr.map((seat, colIdx) => {
+                const seatLabel = this.getSeatLabel(rowIdx, colIdx);
+                const isGap = colIdx === 6 || colIdx === 20;
+                if (isGap) {
+                  return <div key={colIdx} className="seat empty-seat"></div>;
+                }
+                const isReserved =
+                  (reservedSeats && reservedSeats.includes(seatLabel)) ||
+                  seat.reserved;
+                const isSelected = selected.includes(seatLabel);
+                const seatColor = isReserved
+                  ? sectionColors.reserved
+                  : isSelected
+                  ? sectionColors.selected
+                  : sectionColors.available;
+                return (
+                  <button
+                    key={seatLabel}
+                    className="seat"
+                    onClick={
+                      !isReserved
+                        ? (e) => {
+                            e.stopPropagation();
+                            this.handleSeatClick(seatLabel);
+                          }
+                        : undefined
+                    }
+                    disabled={isReserved}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: !isReserved ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    <CinemaChairSVG1 fillColor={seatColor} seatNumber={seatLabel} />
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
         {/* Legend */}
-        <div className="legend-container">
-          <h3 style={{ textAlign: 'center', marginBottom: 8, fontSize: '1.5rem' }}>Legend</h3>
-          <div className="legend-row-layout">
-            {SECTIONS.map(section => (
-              <div className="legend-section" key={section}>
-                <div className="legend-section-title" style={{ fontSize: '1.5rem' }}>{section}</div>
+        <div
+          className="legend-container"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            gap: 48, // Increased gap for more space between columns
+            margin: '32px auto 0 auto', // Add top margin for separation from seats
+            maxWidth: 900,
+            width: '100%',
+          }}
+        >
+          {/* Section 1: Legend */}
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div className="legend-row-layout">
+              <div className="legend-section">
+                <h3 style={{ textAlign: 'center', marginBottom: 8, fontSize: '1.5rem', color: "#ffffff"}}>Legend</h3>
                 <div className="legend-icons-horizontal">
                   <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors[section].available} size={50} />
+                    <CinemaChairSVG fillColor={sectionColors.available} size={50} />
                     <span style={{ fontSize: '1.5rem' }}>Available</span>
                   </div>
                   <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors[section].selected} size={50} />
+                    <CinemaChairSVG fillColor={sectionColors.selected} size={50} />
                     <span style={{ fontSize: '1.5rem' }}>Selected</span>
                   </div>
                   <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors[section].reserved} size={50} />
+                    <CinemaChairSVG fillColor={sectionColors.reserved} size={50} />
                     <span style={{ fontSize: '1.5rem' }}>Reserved</span>
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
+          </div>
+          {/* Section 2: Row Locations */}
+          <div
+            style={{
+              flex: 1,
+              borderRadius: 8,
+              padding: '18px 24px',
+              minWidth: 500,
+              fontSize: '1.5rem',
+              color: '#ffffff',
+              textAlign: 'left',  
+              marginLeft: 12 // Extra gap inside the flex container
+            }}
+          >
+            <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 8 }}>
+              Row Locations
+            </div>
+            <div style={{ marginTop: 12 }}>
+              {rowLocationGroups.map((loc, idx) => (
+                <div key={idx} style={{ marginBottom: 10 }}>
+                  Rows&nbsp;
+                  {loc.ranges.map(range => {
+                    if (range.includes('-')) {
+                      const [start, end] = range.split('-').map(Number);
+                      return (
+                        rowNumberToLetter(start - 1) + '-' + rowNumberToLetter(end - 1)
+                      );
+                    } else {
+                      return rowNumberToLetter(Number(range) - 1);
+                    }
+                  }).join(', ')}
+                  : {loc.name}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
