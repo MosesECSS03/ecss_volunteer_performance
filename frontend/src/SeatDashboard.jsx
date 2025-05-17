@@ -76,7 +76,15 @@ const rowLocationGroupsRaw = [];
 for (let i = 0; i < ROWS; i += 2) {
   const start = i + 1;
   const end = Math.min(i + 2, ROWS);
-  const name = rowLocationCycle[Math.floor(i / 2) % rowLocationCycle.length];
+
+  // If this is the last group and it's a single row, assign to CT Hub
+  let name;
+  if (end === ROWS && start === end) {
+    name = "CT Hub";
+  } else {
+    name = rowLocationCycle[Math.floor(i / 2) % rowLocationCycle.length];
+  }
+
   rowLocationGroupsRaw.push({
     range: end !== start ? `${start}-${end}` : `${start}`,
     name
@@ -261,7 +269,7 @@ class SeatDashboard extends Component {
                   </div>
                   <div className="legend-item-horizontal">
                     <CinemaChairSVG fillColor={sectionColors.reserved} size={50} />
-                    <span style={{ fontSize: '1.5rem' }}>Reserved</span>
+                    <span style={{ fontSize: '1.5rem' }}>Booked</span>
                   </div>
                 </div>
               </div>
