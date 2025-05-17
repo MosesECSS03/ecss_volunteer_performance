@@ -33,6 +33,7 @@ class App extends Component {
       reservedSeats: [],
       allReservedSeats: []
     };
+    
   }
 
   handleAddRecords = async (formData) => {
@@ -161,6 +162,7 @@ class App extends Component {
     try {
       const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
       var records = response.data.result.data;
+      console.log("Fetched Records:", response.data);
 
       const allReservedSeats = records.flatMap(record =>
         record.seats.flatMap(seatStr => this.expandSeatRange(seatStr))

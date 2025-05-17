@@ -7,7 +7,8 @@ const COLS = 27;
 const sectionColors = {
   available: "rgb(0, 79, 140)",      // maroon (dark, not red)
   selected: "rgb(93, 80, 35)",       // dark goldenrod (gold/yellow)
-  reserved: "rgb(126, 0, 0)"         // dark blue
+  reserved: "rgb(126, 0, 0)",        // dark blue
+  vip: "rgb(201, 114, 0)"            // gold for VIP
 };
 
 const CinemaChairSVG = ({ fillColor, seatNumber, size = 300}) => (
@@ -160,12 +161,19 @@ class SeatDashboard extends Component {
     this.setState({ selected: null });
   };
 
+  handleClearSelection = () => {
+    this.setState({ selected: [] });
+  };
+
   render() {
     const seats = [];
     for (let row = 0; row < ROWS; row++) {
       const rowArr = [];
       for (let col = 0; col < COLS; col++) {
-        const reserved = (row < 2) && (col >= 7 && col <= 19);
+        // VIP seats: C08–C20 and D08–D20
+        const isVIP = (row === 0 || row === 1) && (col >= 7 && col <= 19);
+        // Reserved only if not VIP and in the reserved range
+        const reserved = !isVIP && (row < 2) && (col >= 7 && col <= 19);
         rowArr.push({ row, col, reserved });
       }
       seats.push(rowArr);
@@ -177,16 +185,33 @@ class SeatDashboard extends Component {
     return (
       <div className="dashboard-container">
         <h2 style={{fontSize: '3rem'}}>Seat Reservation Dashboard</h2>
-        <button
-          className="reserve-btn seat-action-gap"
-          onClick={() => this.props.onReserve(selected)}
-          disabled={selected.length === 0}
-          style={{
-            fontSize: '1.5rem',
-          }}
-        >
-          Reserve Selected
-        </button>
+        <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                    <button
+            className="clear-btn seat-action-gap"
+            onClick={this.handleClearSelection}
+            disabled={selected.length === 0}
+            style={{
+              fontSize: '1.5rem',
+              background: '#245357',
+              color: '#fffff',
+              border: '1px solid #888',
+              borderRadius: 6,
+              cursor: selected.length === 0 ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Clear Selection
+          </button>
+          <button
+            className="reserve-btn seat-action-gap"
+            onClick={() => this.props.onReserve(selected)}
+            disabled={selected.length === 0}
+            style={{
+              fontSize: '1.5rem',
+            }}
+          >
+            Reserve Selected
+          </button>
+        </div>
         <div className="seat-grid">
           <div className="stage-row">
             <div className="stage-label" style={{fontSize:"3rem"}}>STAGE</div>
@@ -205,13 +230,18 @@ class SeatDashboard extends Component {
                   return <div key={colIdx} className="seat empty-seat"></div>;
                 }
                 const isReserved =
-                  (reservedSeats && reservedSeats.includes(seatLabel)) ||
-                  seat.reserved;
+                  reservedSeats && reservedSeats.includes(seatLabel);
                 const isSelected = selected.includes(seatLabel);
+                // Only seats C08–C20 and D08–D20 are VIP
+                const isVIP =
+                  (rowIdx === 0 || rowIdx === 1) && // C or D
+                  (colIdx >= 7 && colIdx <= 19);    // 08 to 20 (0-based index)
                 const seatColor = isReserved
                   ? sectionColors.reserved
                   : isSelected
                   ? sectionColors.selected
+                  : isVIP
+                  ? sectionColors.vip
                   : sectionColors.available;
                 return (
                   <button
@@ -270,6 +300,10 @@ class SeatDashboard extends Component {
                   <div className="legend-item-horizontal">
                     <CinemaChairSVG fillColor={sectionColors.reserved} size={50} />
                     <span style={{ fontSize: '1.5rem' }}>Booked</span>
+                  </div>
+                  <div className="legend-item-horizontal">
+                    <CinemaChairSVG fillColor={sectionColors.vip} size={50} />
+                    <span style={{ fontSize: '1.5rem' }}>VIP (Reserved)</span>
                   </div>
                 </div>
               </div>
