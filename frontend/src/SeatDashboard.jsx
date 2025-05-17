@@ -231,11 +231,9 @@ class SeatDashboard extends Component {
                 }
                 const isReserved =
                   reservedSeats && reservedSeats.includes(seatLabel);
-                const isSelected = selected.includes(seatLabel);
-                // Only seats C08–C20 and D08–D20 are VIP
+                const isSelected = selected && selected.includes(seatLabel);
                 const isVIP =
-                  (rowIdx === 0 || rowIdx === 1) && // C or D
-                  (colIdx >= 7 && colIdx <= 19);    // 08 to 20 (0-based index)
+                  (rowIdx === 0 || rowIdx === 1) && (colIdx >= 7 && colIdx <= 19);
                 const seatColor = isReserved
                   ? sectionColors.reserved
                   : isSelected
@@ -257,13 +255,32 @@ class SeatDashboard extends Component {
                     }
                     disabled={isReserved}
                     style={{
-                      background: 'none',
+                      background: isVIP ? ' #734F96' : 'none',
                       border: 'none',
                       padding: 0,
-                      cursor: !isReserved ? 'pointer' : 'not-allowed'
+                      cursor: !isReserved ? 'pointer' : 'not-allowed',
+                      position: 'relative'
                     }}
                   >
                     <CinemaChairSVG1 fillColor={seatColor} seatNumber={seatLabel} />
+                    {isVIP && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '20%',
+                          background: 'gold',
+                          color: '#333',
+                          fontWeight: 'bold',
+                          fontSize: '0.9rem',
+                          borderRadius: 6,
+                          zIndex: 2,
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        VIP
+                      </span>
+                    )}
                   </button>
                 );
               })}

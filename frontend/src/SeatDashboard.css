@@ -352,3 +352,8 @@
   padding: 14px 20px;
   min-width: 200px;
 }
+
+/* Add to SeatDashboard.css */
+.seat[style*="border: 3px solid gold"] {
+  box-shadow: 0 0 8px 2px gold;
+}
