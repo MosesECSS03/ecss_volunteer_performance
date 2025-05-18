@@ -224,147 +224,32 @@ class SeatDashboard extends Component {
               style={{ cursor: 'pointer' }}
             >
               {rowArr.map((seat, colIdx) => {
-                const seatLabel = this.getSeatLabel(rowIdx, colIdx);
-                const isGap = colIdx === 6 || colIdx === 20;
-                if (isGap) {
-                  return <div key={colIdx} className="seat empty-seat"></div>;
-                }
-                const isReserved =
-                  reservedSeats && reservedSeats.includes(seatLabel);
-                const isSelected = selected && selected.includes(seatLabel);
-                const isVIP =
-                  (rowIdx === 0 || rowIdx === 1) && (colIdx >= 7 && colIdx <= 19);
-                const seatColor = isReserved
-                  ? sectionColors.reserved
-                  : isSelected
-                  ? sectionColors.selected
-                  : isVIP
-                  ? sectionColors.vip
-                  : sectionColors.available;
-                return (
-                  <button
-                    key={seatLabel}
-                    className="seat"
-                    onClick={
-                      !isReserved
-                        ? (e) => {
-                            e.stopPropagation();
-                            this.handleSeatClick(seatLabel);
-                          }
-                        : undefined
-                    }
-                    disabled={isReserved}
-                    style={{
-                      background: isVIP ? ' #734F96' : 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: !isReserved ? 'pointer' : 'not-allowed',
-                      position: 'relative'
-                    }}
-                  >
-                    <CinemaChairSVG1 fillColor={seatColor} seatNumber={seatLabel} />
-                    {isVIP && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '20%',
-                          background: 'gold',
-                          color: '#333',
-                          fontWeight: 'bold',
-                          fontSize: '0.9rem',
-                          borderRadius: 6,
-                          zIndex: 2,
-                          pointerEvents: 'none',
-                        }}
-                      >
-                        VIP
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-        {/* Legend */}
-        <div
-          className="legend-container"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            gap: 48, // Increased gap for more space between columns
-            margin: '32px auto 0 auto', // Add top margin for separation from seats
-            maxWidth: 900,
-            width: '100%',
-          }}
-        >
-          {/* Section 1: Legend */}
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div className="legend-row-layout">
-              <div className="legend-section">
-                <h3 style={{ textAlign: 'center', marginBottom: 8, fontSize: '1.5rem', color: "#ffffff"}}>Legend</h3>
-                <div className="legend-icons-horizontal">
-                  <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors.available} size={50} />
-                    <span style={{ fontSize: '1.5rem' }}>Available</span>
-                  </div>
-                  <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors.selected} size={50} />
-                    <span style={{ fontSize: '1.5rem' }}>Selected</span>
-                  </div>
-                  <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors.reserved} size={50} />
-                    <span style={{ fontSize: '1.5rem' }}>Booked</span>
-                  </div>
-                  <div className="legend-item-horizontal">
-                    <CinemaChairSVG fillColor={sectionColors.vip} size={50} />
-                    <span style={{ fontSize: '1.5rem' }}>VIP (Reserved)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Section 2: Row Locations */}
-          <div
-            style={{
-              flex: 1,
-              borderRadius: 8,
-              padding: '18px 24px',
-              minWidth: 500,
-              fontSize: '1.5rem',
-              color: '#ffffff',
-              textAlign: 'left',  
-              marginLeft: 12 // Extra gap inside the flex container
-            }}
-          >
-            <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 8 }}>
-              Row Locations
-            </div>
-            <div style={{ marginTop: 12 }}>
-              {rowLocationGroups.map((loc, idx) => (
-                <div key={idx} style={{ marginBottom: 10 }}>
-                  Rows&nbsp;
-                  {loc.ranges.map(range => {
-                    if (range.includes('-')) {
-                      const [start, end] = range.split('-').map(Number);
-                      return (
-                        rowNumberToLetter(start - 1) + '-' + rowNumberToLetter(end - 1)
-                      );
-                    } else {
-                      return rowNumberToLetter(Number(range) - 1);
-                    }
-                  }).join(', ')}
-                  : {loc.name}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-}
-
-export default SeatDashboard;
+                // Only render seats for 0-5, 7-19, 21-26
+                if (
+                  (colIdx >= 0 && colIdx <= 5) ||
+                  (colIdx >= 7 && colIdx <= 19) ||
+                  (colIdx >= 21 && colIdx <= 26)
+                ) {
+                  const seatLabel = this.getSeatLabel(rowIdx, colIdx);
+                  const isReserved =
+                    reservedSeats && reservedSeats.includes(seatLabel);
+                  const isSelected = selected && selected.includes(seatLabel);
+                  const isVIP =
+                    (rowIdx === 0 || rowIdx === 1) && (colIdx >= 7 && colIdx <= 19);
+                  const seatColor = isReserved
+                    ? sectionColors.reserved
+                    : isSelected
+                    ? sectionColors.selected
+                    : isVIP
+                    ? sectionColors.vip
+                    : sectionColors.available;
+                  return (
+                    <button
+                      key={seatLabel}
+                      className="seat"
+                      onClick={
+                        !isReserved
+                          ? (e) => {
+                              e.stopPropagation();
+                              this.handleSeatClick(seatLabel);
+                           
