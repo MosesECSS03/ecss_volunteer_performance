@@ -135,6 +135,12 @@ class SeatDashboard extends Component {
 
   handleClearSelection = () => {
     this.setState({ selected: [] });
+    console.log("Cleared selected seats:", this.props.reservedSeats);
+    console.log("Cleared selected seats:", this.props.onClearReservedSeats);
+   // if (this.props.onClearReservedSeats) {
+      console.log("Calling onClearReservedSeats");
+      this.props.onClearReservedSeats();
+    //}
   };
 
   render() {
@@ -166,7 +172,7 @@ class SeatDashboard extends Component {
               color: '#fff',
               border: '1px solid #888',
               borderRadius: 6,
-              cursor: selected.length === 0 ? 'not-allowed' : 'pointer'
+             //cursor: selected.length === 0 && this.props.reserved1.length == 0? 'not-allowed' : 'pointer'
             }}
           >
             Clear Selection

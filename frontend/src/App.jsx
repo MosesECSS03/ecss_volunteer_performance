@@ -31,7 +31,8 @@ class App extends Component {
       selectedSeatsCount: 0,
       lastReservedCount: 0,
       reservedSeats: [],
-      allReservedSeats: []
+      allReservedSeats: [],
+      selected: {} // <-- Add this line
     };
     
   }
@@ -116,6 +117,17 @@ class App extends Component {
     this.setState({ selectedSeatsCount: count });
   };
 
+  handleClearReservedSeats = () => {
+    console.log("App: handleClearReservedSeats called", this.state.reservedSeats);
+    const reservedSet = new Set(this.state.reservedSeats);
+    this.setState(prevState => ({
+      reservedSeats: [],
+      allReservedSeats: prevState.allReservedSeats.filter(seat => !reservedSet.has(seat)),
+      lastReservedCount: 0,
+      selectedSeatsCount: 0
+    }));
+  };
+
   handleReserve = (reservedSeats) => {
     console.log("Reserved Seats:", reservedSeats);
     this.setState(prevState => ({
@@ -175,7 +187,7 @@ class App extends Component {
   };
 
   render() {
-    const { records, activeTab, lastReservedCount, allReservedSeats } = this.state;
+    const { records, activeTab, lastReservedCount, allReservedSeats, reservedSeats } = this.state;
     return (
       <div>
         {/* SeatDashboard is always shown */}
@@ -183,6 +195,8 @@ class App extends Component {
           onReserve={this.handleReserve}
           onSelectedSeatsChange={this.handleSelectedSeatsChange}
           reservedSeats={allReservedSeats}
+          reservedSeats1={reservedSeats}
+          onClearReservedSeats={this.handleClearReservedSeats}
         />
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <button

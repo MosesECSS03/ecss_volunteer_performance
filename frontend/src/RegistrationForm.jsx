@@ -20,6 +20,10 @@ function formatSeatLabel(seat) {
   return seat;
 }
 
+function toTitleCase(str) {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
 class RegistrationForm extends Component {
   constructor(props) {
     super(props);
@@ -46,7 +50,12 @@ class RegistrationForm extends Component {
   }
 
   handleChange = (e) => {
-    this.setState({ [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+    // Auto-capitalize for name and staffName fields
+    if (name === "name" || name === "staffName") {
+      value = toTitleCase(value);
+    }
+    this.setState({ [name]: value });
   };
 
   handleLocationChange = (e) => {
@@ -63,9 +72,10 @@ class RegistrationForm extends Component {
 
   handleSubmit = (e) => {
     e.preventDefault();
-    const { name, staffName, location, paymentType, paymentRef } = this.state;
+    let { name, staffName, location, paymentType, paymentRef } = this.state;
     const { selectedSeatsCount, reservedSeats } = this.props;
-    console.log('Selected Seats123:', (reservedSeats || []).map(formatSeatLabel));
+    name = toTitleCase(name.trim());
+    staffName = toTitleCase(staffName.trim());
     const price = (selectedSeatsCount || 0) * 35;
     if (!name || !staffName || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
     this.props.onSubmit({
