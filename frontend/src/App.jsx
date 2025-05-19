@@ -100,7 +100,7 @@ class App extends Component {
           selectedSeatsCount: 0,
           lastReservedCount: 0
         }));
-
+        console.log("OneSignal is available", window.OneSignal);
         // OneSignal push notification (if permission granted)
         if (window.OneSignal) {
           console.log("OneSignal is available");
