@@ -105,8 +105,15 @@ router.post('/', async function(req, res, next)
       console.log("Grouped Records:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
 
-      // Emit socket event after successful insert
-      if (io) io.emit('reservation-updated', { message: 'Reservation updated successfully' });
+      if (io && groupedRecords.length > 0) {
+        io.emit('reservation-updated', {
+          message: 'Reservation updated successfully',
+          bookingNo: groupedRecords[0].bookingNo,
+          seats: Array.isArray(groupedRecords[0].seats)
+            ? groupedRecords[0].seats.join(', ')
+            : String(groupedRecords[0].seats)
+        });
+      }
 
       return res.json({ success: true, ...result });
     }
