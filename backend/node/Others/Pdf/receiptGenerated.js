@@ -147,6 +147,7 @@ class ReceiptGenerator {
 
       // QR Code content
       const qrText = [
+        `Name: ${record.name || ''}`,
         `Booking No: ${record.bookingNo || ''}`,
         `No of Tickets: ${record.selectedSeatsCount || 2}`,
         `Seats: ${Array.isArray(record.seats) ? record.seats.join(', ') : 'A01, A02, A03'}`,
