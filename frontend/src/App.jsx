@@ -104,13 +104,28 @@ class App extends Component {
         // OneSignal push notification (if permission granted)
         if (window.OneSignalDeferred) {
           window.OneSignalDeferred.push(async function(OneSignal) {
-            const isEnabled = await OneSignal.isPushNotificationsEnabled();
-            if (isEnabled) {
-              OneSignal.sendSelfNotification(
-                "New Reservation!",
-                `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
-                window.location.href // or your desired URL
-              );
+            try {
+              // Check if user is subscribed using the new User model API
+              const isPushSupported = await OneSignal.isPushSupported();
+              if (!isPushSupported) {
+                console.log("Push notifications not supported");
+                return;
+              }
+              
+              // Check if user is subscribed
+              const isPushEnabled = await OneSignal.User.PushSubscription.optedIn;
+              console.log("OneSignal subscription status:", isPushEnabled);
+              
+              if (isPushEnabled) {
+                // Send notification
+                await OneSignal.Notifications.sendSelfNotification(
+                  "New Reservation!",
+                  `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
+                  window.location.href
+                );
+              }
+            } catch (err) {
+              console.error("OneSignal notification error:", err);
             }
           });
         }
