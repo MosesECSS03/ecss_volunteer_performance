@@ -101,7 +101,7 @@ class App extends Component {
           lastReservedCount: 0
         }));
         console.log("OneSignal is available", window.OneSignal);
-       /* // OneSignal push notification (if permission granted)
+       // OneSignal push notification (if permission granted)
         if (window.OneSignal) {
           console.log("OneSignal is available");
           console.log("OneSignal is available", window.OneSignal);
@@ -126,7 +126,7 @@ class App extends Component {
               );
             }
           });
-        }*/
+        }
 
         // Refresh the page
         //window.location.reload();
