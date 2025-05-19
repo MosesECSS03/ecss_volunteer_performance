@@ -15,6 +15,16 @@
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "62117916-bc7c-4424-a12a-f6e54aa06cc5",
+          notifyButton: {
+            enable: true,  // Shows the bell icon
+          },
+          promptOptions: {
+            slidedown: {
+              prompts: [
+                { type: "push", autoPrompt: true }
+              ]
+            }
+          }
         });
       });
     </script>

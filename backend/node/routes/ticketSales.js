@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var TicketSalesController = require('../Controller/TicketSales/TicketSalesController'); 
 var receiptGenerator = require("../Others/Pdf/receiptGenerated"); // Import the receipt generator utility
-//const { sendOneSignalNotification } = require('../utils/onesignal');
+const { sendOneSignalNotification } = require('../utils/onesignal');
 
 function seatsToRangesByRow(seats) {
   if (!Array.isArray(seats) || seats.length === 0) return [];
@@ -92,14 +92,21 @@ router.post('/', async function(req, res, next)
       console.log("Grouped Records:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
 
-      /*// Send OneSignal notification
+      // Send OneSignal notification
       const bookingNo = groupedRecords[0].bookingNo;
       const seats = groupedRecords[0].seats;
-      await sendOneSignalNotification({
-        title: 'New Reservation!',
-        message: `Booking No: ${bookingNo}\nSeats: ${seats.join(', ')}`,
-        url: 'https://white-stone-093a71d10.6.azurestaticapps.net/'
-      });*/
+
+      try {
+        await sendOneSignalNotification({
+          title: 'New Reservation!',
+          message: `Booking No: ${bookingNo}\nSeats: ${seats.join(', ')}`,
+          url: 'https://white-stone-093a71d10.6.azurestaticapps.net/' // Your actual frontend URL
+        });
+        console.log("OneSignal notification sent successfully");
+      } catch (error) {
+        console.error("Failed to send OneSignal notification:", error);
+        // Continue with the response even if notification fails
+      }
 
       if (io && groupedRecords.length > 0) {
         io.emit('reservation-updated', {

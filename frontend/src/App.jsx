@@ -101,35 +101,6 @@ class App extends Component {
           lastReservedCount: 0
         }));
 
-        // OneSignal push notification (if permission granted)
-        if (window.OneSignalDeferred) {
-          window.OneSignalDeferred.push(async function(OneSignal) {
-            try {
-              // Check if user is subscribed using the new User model API
-              const isPushSupported = await OneSignal.isPushSupported();
-              if (!isPushSupported) {
-                console.log("Push notifications not supported");
-                return;
-              }
-              
-              // Check if user is subscribed
-              const isPushEnabled = await OneSignal.User.PushSubscription.optedIn;
-              console.log("OneSignal subscription status:", isPushEnabled);
-              
-              if (isPushEnabled) {
-                // Send notification
-                await OneSignal.Notifications.sendSelfNotification(
-                  "New Reservation!",
-                  `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
-                  window.location.href
-                );
-              }
-            } catch (err) {
-              console.error("OneSignal notification error:", err);
-            }
-          });
-        }
-
         // Refresh the page
         //window.location.reload();
       }
