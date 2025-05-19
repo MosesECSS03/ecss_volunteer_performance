@@ -89,7 +89,7 @@ router.post('/', async function(req, res, next)
 
       // Instantiate controller and save
       var controller = new TicketSalesController();
-      console.log("Grouped Records:", groupedRecords);
+      console.log(" RecordsGrouped:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
 
       // Send OneSignal notification
@@ -174,6 +174,7 @@ router.post('/', async function(req, res, next)
     }
     else if(req.body.purpose === "retrieve") 
     {
+  
       // Instantiate controller and retrieve records
       var controller = new TicketSalesController();
       var result = await controller.getSalesRecords();

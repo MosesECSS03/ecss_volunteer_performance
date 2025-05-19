@@ -102,7 +102,7 @@ class App extends Component {
         }));
 
         // Refresh the page
-        //window.location.reload();
+        window.location.reload();
       }
     } catch (error) {
       console.error('❌ Error saving records:', error);
@@ -163,20 +163,6 @@ class App extends Component {
     this.socket.on('reservation-updated', (data) => {
       console.log("Socket event received", data);
       this.fetchRecords();
-
-      /*// Show a OneSignal notification (if permission granted)
-      if (window.OneSignal) {
-        window.OneSignal.isPushNotificationsEnabled().then(isEnabled => {
-          if (isEnabled) {
-            window.OneSignal.sendSelfNotification(
-              "New Reservation!",
-              data && data.message ? data.message : "A new reservation has been made.",
-              data && data.url ? data.url : window.location.href,
-              data && data.icon ? data.icon : undefined
-            );
-          }
-        });
-      }*/
     });
   }
 
