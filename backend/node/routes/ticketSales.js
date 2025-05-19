@@ -4,7 +4,38 @@ var TicketSalesController = require('../Controller/TicketSales/TicketSalesContro
 var receiptGenerator = require("../Others/Pdf/receiptGenerated"); // Import the receipt generator utility
 //const { sendOneSignalNotification } = require('../utils/onesignal');
 
-// ...existing code...
+function seatsToRangesByRow(seats) {
+  if (!Array.isArray(seats) || seats.length === 0) return [];
+  // Group seats by row
+  const rows = {};
+  seats.forEach(seat => {
+    const row = seat[0];
+    const num = parseInt(seat.slice(1), 10);
+    if (!rows[row]) rows[row] = [];
+    rows[row].push(num);
+  });
+  // Convert each row's numbers to sorted ranges
+  const ranges = [];
+  Object.keys(rows).forEach(row => {
+    const nums = rows[row].sort((a, b) => a - b);
+    let start = nums[0];
+    let end = nums[0];
+    for (let i = 1; i <= nums.length; i++) {
+      if (nums[i] === end + 1) {
+        end = nums[i];
+      } else {
+        if (start === end) {
+          ranges.push(`${row}${String(start).padStart(2, '0')}`);
+        } else {
+          ranges.push(`${row}${String(start).padStart(2, '0')} - ${row}${String(end).padStart(2, '0')}`);
+        }
+        start = nums[i];
+        end = nums[i];
+      }
+    }
+  });
+  return ranges;
+}
 
 router.post('/', async function(req, res, next) 
 {
