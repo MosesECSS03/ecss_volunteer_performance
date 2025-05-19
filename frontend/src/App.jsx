@@ -106,8 +106,20 @@ class App extends Component {
           console.log("OneSignal is available");
           console.log("OneSignal is available", window.OneSignal);
           window.OneSignal.isPushNotificationsEnabled().then(isEnabled => {
+            console.log("OneSignal is available", isEnabled);
             if (isEnabled) {
               window.OneSignal.sendSelfNotification(
+                "New Reservation!",
+                `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
+                window.location.href
+              );
+            }
+          });
+        } else if (window.OneSignalDeferred) {
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            const isEnabled = await OneSignal.isPushNotificationsEnabled();
+            if (isEnabled) {
+              OneSignal.sendSelfNotification(
                 "New Reservation!",
                 `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
                 window.location.href
