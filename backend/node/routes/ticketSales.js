@@ -106,7 +106,7 @@ router.post('/', async function(req, res, next)
       var result = await controller.addSalesRecords(groupedRecords);
 
       // Emit socket event after successful insert
-     if (io) io.emit('reservation-updated');
+      if (io) io.emit('reservation-updated', { message: 'Reservation updated successfully' });
 
       return res.json({ success: true, ...result });
     }
