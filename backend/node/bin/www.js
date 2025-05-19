@@ -23,6 +23,20 @@ var server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, { cors: { origin: "*" } });
 app.set('io', io); // Make io available in routes
+
+io.on('connection', (socket) => {
+  console.log('Android client connected:', socket.id);
+
+  socket.on('message', (data) => {
+    console.log('Received from Android:', data);
+    // Echo back or broadcast
+    socket.emit('message', 'Hello from Node.js backend!');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Android client disconnected:', socket.id);
+  });
+});
 // --- End Socket.IO setup ---
 
 /**
