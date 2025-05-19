@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var TicketSalesController = require('../Controller/TicketSales/TicketSalesController'); 
 var receiptGenerator = require("../Others/Pdf/receiptGenerated"); // Import the receipt generator utility
-const { sendOneSignalNotification } = require('../utils/onesignal');
+//const { sendOneSignalNotification } = require('../utils/onesignal');
 
 // ...existing code...
 
@@ -61,14 +61,14 @@ router.post('/', async function(req, res, next)
       console.log("Grouped Records:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
 
-      // Send OneSignal notification
+      /*// Send OneSignal notification
       const bookingNo = groupedRecords[0].bookingNo;
       const seats = groupedRecords[0].seats;
       await sendOneSignalNotification({
         title: 'New Reservation!',
         message: `Booking No: ${bookingNo}\nSeats: ${seats.join(', ')}`,
         url: 'https://white-stone-093a71d10.6.azurestaticapps.net/'
-      });
+      });*/
 
       if (io && groupedRecords.length > 0) {
         io.emit('reservation-updated', {
