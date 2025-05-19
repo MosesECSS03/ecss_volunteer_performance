@@ -2,53 +2,9 @@ var express = require('express');
 var router = express.Router();
 var TicketSalesController = require('../Controller/TicketSales/TicketSalesController'); 
 var receiptGenerator = require("../Others/Pdf/receiptGenerated"); // Import the receipt generator utility
+const { sendOneSignalNotification } = require('../utils/onesignal');
 
-function seatsToRangesByRow(seats) {
-  if (!seats || seats.length === 0) return [];
-
-  // Group seats by row letter
-  const rows = {};
-
-  seats.forEach(seat => {
-    const row = seat[0];
-    const col = parseInt(seat.slice(1));
-    if (!rows[row]) rows[row] = [];
-    rows[row].push(col);
-  });
-
-  const ranges = [];
-
-  Object.keys(rows).sort().forEach(row => {
-    const cols = rows[row].sort((a,b) => a - b);
-
-    // Use a temp array to group continuous columns
-    let tempGroup = [cols[0]];
-
-    for (let i = 1; i < cols.length; i++) {
-      if (cols[i] === cols[i-1] + 1) {
-        // Continuous seat, add to group
-        tempGroup.push(cols[i]);
-      } else {
-        // Not continuous, push the previous group as range or single seats
-        ranges.push(formatRange(row, tempGroup));
-        tempGroup = [cols[i]];
-      }
-    }
-    // Push the last group
-    ranges.push(formatRange(row, tempGroup));
-  });
-
-  return ranges;
-}
-
-function formatRange(row, cols) {
-  const pad = n => n.toString().padStart(2, '0');
-  if (cols.length === 1) {
-    return `${row}${pad(cols[0])}`;
-  } else {
-    return `${row}${pad(cols[0])} - ${row}${pad(cols[cols.length - 1])}`;
-  }
-}
+// ...existing code...
 
 router.post('/', async function(req, res, next) 
 {
@@ -104,6 +60,15 @@ router.post('/', async function(req, res, next)
       var controller = new TicketSalesController();
       console.log("Grouped Records:", groupedRecords);
       var result = await controller.addSalesRecords(groupedRecords);
+
+      // Send OneSignal notification
+      const bookingNo = groupedRecords[0].bookingNo;
+      const seats = groupedRecords[0].seats;
+      await sendOneSignalNotification({
+        title: 'New Reservation!',
+        message: `Booking No: ${bookingNo}\nSeats: ${seats.join(', ')}`,
+        url: 'https://white-stone-093a71d10.6.azurestaticapps.net/'
+      });
 
       if (io && groupedRecords.length > 0) {
         io.emit('reservation-updated', {
