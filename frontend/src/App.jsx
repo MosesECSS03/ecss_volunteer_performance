@@ -100,29 +100,16 @@ class App extends Component {
           selectedSeatsCount: 0,
           lastReservedCount: 0
         }));
-        console.log("OneSignal is available", window.OneSignal);
-       // OneSignal push notification (if permission granted)
-        if (window.OneSignal) {
-          console.log("OneSignal is available");
-          console.log("OneSignal is available", window.OneSignal);
-          window.OneSignal.isPushNotificationsEnabled().then(isEnabled => {
-            console.log("OneSignal is available", isEnabled);
-            if (isEnabled) {
-              window.OneSignal.sendSelfNotification(
-                "New Reservation!",
-                `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
-                window.location.href
-              );
-            }
-          });
-        } else if (window.OneSignalDeferred) {
+
+        // OneSignal push notification (if permission granted)
+        if (window.OneSignalDeferred) {
           window.OneSignalDeferred.push(async function(OneSignal) {
             const isEnabled = await OneSignal.isPushNotificationsEnabled();
             if (isEnabled) {
               OneSignal.sendSelfNotification(
                 "New Reservation!",
                 `Booking No: ${seatRecord.bookingNo}\nSeats: ${seatRecord.seats.join(', ')}`,
-                window.location.href
+                window.location.href // or your desired URL
               );
             }
           });
