@@ -100,9 +100,22 @@ router.post('/', async function(req, res, next)
         await sendOneSignalNotification({
           title: 'New Reservation!',
           message: `Booking No: ${bookingNo}\nSeats: ${seats.join(', ')}`,
-          url: 'https://white-stone-093a71d10.6.azurestaticapps.net/' // Your actual frontend URL
+          // Platform-specific URLs
+          web_url: "http://localhost:3000", // Web browser users go here
+          app_url: "ecssapp://reservations", // Mobile app users go here (deep link)
+          // You can use these in production:
+          // web_url: 'https://white-stone-093a71d10.6.azurestaticapps.net/',
+          // Additional platform customizations
+          /*ios_attachments: {
+            id1: "https://example.com/images/ticket-icon.png" // Optional: attach image for iOS
+          },*/
+          android_channel_id: "reservation-channel", // Optional: Android notification channel
+          data: {
+            bookingNo: bookingNo,
+            seats: seats.join(', ')
+          }
         });
-        console.log("OneSignal notification sent successfully");
+        console.log("Smart OneSignal notification sent successfully");
       } catch (error) {
         console.error("Failed to send OneSignal notification:", error);
         // Continue with the response even if notification fails
