@@ -158,6 +158,20 @@ class SeatDashboard extends Component {
     const { selected } = this.state;
     const { reservedSeats } = this.props;
 
+    // Create array of column indices to display (skipping gaps)
+    const colIndices = [];
+    for (let col = 0; col < COLS; col++) {
+      if ((col >= 0 && col <= 5) || (col >= 7 && col <= 19) || (col >= 21 && col <= 26)) {
+        // For each visible column, add the seat number (1-based)
+        if (col <= 5) colIndices.push(col + 1);  // Fixed missing parenthesis
+        else if (col <= 19) colIndices.push(col); // Adjust for gap at col 6
+        else colIndices.push(col-1); // Adjust for gaps at col 6 and 20
+      } else {
+        // For gap columns, push null
+        colIndices.push(null);
+      }
+    }
+
     return (
       <div className="dashboard-container">
         <h2 style={{ fontSize: '3rem' }}>Seat Reservation Dashboard</h2>
@@ -172,7 +186,6 @@ class SeatDashboard extends Component {
               color: '#fff',
               border: '1px solid #888',
               borderRadius: 6,
-             //cursor: selected.length === 0 && this.props.reserved1.length == 0? 'not-allowed' : 'pointer'
             }}
           >
             Clear Selection
@@ -192,15 +205,82 @@ class SeatDashboard extends Component {
           <div className="stage-row">
             <div className="stage-label" style={{ fontSize: "3rem" }}>STAGE</div>
           </div>
+          
+          {/* Add column indices row */}
+          <div className="seat-row column-indices" style={{ 
+  marginBottom: '10px',
+  display: 'flex',
+  alignItems: 'center'
+}}>
+  {/* Empty cell for row index column */}
+  <div style={{ 
+    width: '40px', 
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#FFEB3B', // Yellow for contrast
+    fontWeight: 'bold',
+    fontSize: '1.3rem',
+    marginRight: '5px' // Match the margin of row letters
+  }}></div>
+  
+  {colIndices.map((colIndex, idx) => {
+    if (colIndex === null) {
+      // Render gap at colIdx 6 and 20
+      return <div key={`col-gap-${idx}`} className="seat empty-seat"></div>;
+    }
+    
+    return (
+      <div key={`col-${idx}`} style={{ 
+        width: '60px', // Match the width of the seat SVG (size/2)
+        height: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#FFEB3B', // Yellow for contrast
+        fontWeight: 'bold',
+        fontSize: '1.3rem',
+        // Ensure perfect centering
+        boxSizing: 'border-box',
+        textAlign: 'center',
+        position: 'relative',
+        // These margins should match the button/seat spacing
+        margin: '0',
+        padding: '0'
+      }}>
+        {colIndex}
+      </div>
+    );
+  })}
+</div>
+          
           {seats.map((rowArr, rowIdx) => {
             let seatNumber = 1; // Start seat number at 1 for each row
+            const rowLetter = String.fromCharCode(67 + rowIdx);
+            
             return (
               <div
                 className="seat-row"
                 key={rowIdx}
                 onClick={() => this.handleRowClick(rowIdx)}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
+                {/* Add row index cell */}
+                <div style={{ 
+                  width: '40px', 
+                  height: '60px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFEB3B', // Yellow for contrast
+                  fontWeight: 'bold',
+                  fontSize: '1.5rem',
+                  marginRight: '5px'
+                }}>
+                  {rowLetter}
+                </div>
+                
                 {rowArr.map((seat, colIdx) => {
                   // Only render seats for 0-5, 7-19, 21-26
                   if (
@@ -208,7 +288,6 @@ class SeatDashboard extends Component {
                     (colIdx >= 7 && colIdx <= 19) ||
                     (colIdx >= 21 && colIdx <= 26)
                   ) {
-                    const rowLetter = String.fromCharCode(67 + rowIdx);
                     const seatLabel = `${rowLetter}${seatNumber.toString().padStart(2, '0')}`;
                     seatNumber++; // Increment only for visible seats
                     const isReserved =
@@ -281,6 +360,7 @@ class SeatDashboard extends Component {
             );
           })}
         </div>
+        
         {/* Legend */}
         <div
           className="legend-container"
