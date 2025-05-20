@@ -323,14 +323,38 @@ class SeatingPlan extends Component {
             fontSize: '1.2rem',
             color: '#004f8c',
             letterSpacing: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 24,
           }}
         >
-          {selected.length > 0
-            ? `Selected Seats: ${groupSeatLabels(selected).join(', ')}`
-            : 'No seats selected'}
+          <span>
+            {selected.length > 0
+              ? `Selected Seats: ${groupSeatLabels(selected).join(', ')}`
+              : 'No seats selected'}
+          </span>
+          {selected.length > 0 && (
+            <button
+              onClick={this.handleClearSelection}
+              style={{
+                marginLeft: 12,
+                padding: '4px 16px',
+                background: '#e74c3c',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '1rem',
+              }}
+            >
+              Clear Selection
+            </button>
+          )}
         </div>
 
-        <div className="seating-scroll-container">
+        <div className="seating-scroll-cont ner">
           <div className="stage-row">
             <div className="stage-label">STAGE</div>
           </div>

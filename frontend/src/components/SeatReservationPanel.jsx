@@ -544,7 +544,7 @@ class SeatReservationPanel extends Component {
             </div>
             
             {/* AI Insights Section */}
-            <div className="info-panel ai-insights">
+           {/* <div className="info-panel ai-insights">
               <h3>AI Insights</h3>
               <ul className="insights-list">
                 {aiInsights.map(insight => (
@@ -554,7 +554,7 @@ class SeatReservationPanel extends Component {
                   </li>
                 ))}
               </ul>
-            </div>
+            </div>*/}
             
             {/* Notifications Section */}
             <div className="info-panel notifications">
@@ -573,6 +573,45 @@ class SeatReservationPanel extends Component {
             </div>
           </div>
         </div>
+        <div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    margin: '12px 0'
+  }}
+>
+  <input
+    type="number"
+    min="1"
+    max="10"
+    value={this.props.noOfReservedSeats}
+    onChange={e => this.props.onSelectedSeatsCountChange(e.target.value)}
+    style={{
+      width: '60px !important',
+      padding: '4px 8px !important',
+      fontSize: '1rem !important',
+      borderRadius: '4px !important',
+      border: '1px solid #ccc !important',
+      marginRight: '0 !important'
+    }}
+  />
+  <button
+    onClick={this.handleAutoSelectSeats}
+    style={{
+      padding: '4px 14px !important',
+      fontSize: '1rem !important',
+      borderRadius: '4px !important',
+      background: '#0078d4 !important',
+      color: '#fff !important',
+      border: 'none !important',
+      fontWeight: 'bold !important',
+      cursor: 'pointer !important'
+    }}
+  >
+    Get Next Seats
+  </button>
+</div>
       </div>
     );
   }
