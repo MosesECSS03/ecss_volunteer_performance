@@ -1,0 +1,197 @@
+.seating-plan-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  margin: 0 auto;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 16px;
+  color: white;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.clear-btn, .reserve-btn {
+  padding: 8px 16px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+}
+
+.clear-btn {
+  background-color: #245357;
+  color: #fff;
+}
+
+.clear-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.reserve-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.reserve-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.seating-scroll-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.stage-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.stage-label {
+  background-color: #333;
+  color: white;
+  padding: 5px 30px;
+  border-radius: 5px;
+  text-align: center;
+  min-width: 200px;
+  font-size: 2rem;
+}
+
+/* New grid layout structure */
+.seat-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Column indices at the top */
+.column-indices-container {
+  display: flex;
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.corner-cell {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  background-color: #1a1a1a;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+.column-indices-row {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar in IE and Edge */
+}
+
+.column-indices-row::-webkit-scrollbar {
+  display: none; /* Hide scrollbar in Chrome and Safari */
+}
+
+.col-index-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  color: #FFEB3B;
+  font-weight: bold;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.col-index-gap {
+  height: 40px;
+  flex-shrink: 0;
+}
+
+/* Main grid container with row indices and seats */
+.grid-container {
+  display: flex;
+  overflow: hidden;
+}
+
+.row-index-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px; /* Match the height of each seat row */
+  color: #FFEB3B;
+  font-weight: bold;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  background: #1a1a1a;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+/* Scrollable seats grid */
+.seats-grid-container {
+  overflow-y: visible;
+  width: 100%;
+}
+
+.seat-row {
+  display: flex;
+  height: 60px; /* Fixed height for each row */
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.seat-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.seat {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seat.reserved {
+  cursor: not-allowed;
+}
+
+.seat-gap {
+  flex-shrink: 0;
+}
+
+.vip-badge {
+  position: absolute;
+  top: 70%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 0.8rem;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  z-index: 2;
+}

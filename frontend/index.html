@@ -26,6 +26,21 @@
             }
           }
         });
+
+        if (window.OneSignal) {
+          window.OneSignal.push(() => {
+            window.OneSignal.on('notificationDisplay', (event) => {
+              console.log('OneSignal notification event:', event);
+              // Dispatch a custom event for React to listen to
+              window.dispatchEvent(new CustomEvent('onesignal-notification', {
+                detail: {
+                  type: 'info',
+                  message: event.heading ? `${event.heading}: ${event.content}` : event.content || JSON.stringify(event)
+                }
+              }));
+            });
+          });
+        }
       });
     </script>
   </body>

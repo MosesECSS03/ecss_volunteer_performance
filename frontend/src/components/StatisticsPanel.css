@@ -1,0 +1,106 @@
+.statistics-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.statistics-panel h2 {
+  color: #0078d4;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.time-range-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.time-range-selector button {
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.time-range-selector button.active {
+  background-color: #0078d4;
+  color: white;
+}
+
+.time-range-selector button:hover:not(.active) {
+  background-color: #e0e0e0;
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.stats-card {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.stats-card h3 {
+  color: #0078d4;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.chart-placeholder {
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.chart-bar {
+  width: 40px;
+  background-color: #0078d4;
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 0.5s ease;
+}
+
+.bar-label {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.usage-stats, .peak-hours-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.location-usage-item, .peak-hour-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usage-bar-container {
+  flex-grow: 1;
+  height: 20px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.usage-bar {
+  height: 100%;
+  background-color: #0078d4;
+  transition: width 0.5s ease;
+}

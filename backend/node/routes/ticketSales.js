@@ -104,7 +104,7 @@ router.post('/', async function(req, res, next)
           //web_url: "http://localhost:3000", // Web browser users go here
           app_url: "ecssapp://reservations", // Mobile app users go here (deep link)
           // You can use these in production:
-          web_url: 'https://white-stone-093a71d10.6.azurestaticapps.net/',
+          web_url: 'https://white-stone-093a71d10.6.azurestaticapps.net/version2',
           // Additional platform customizations
           /*ios_attachments: {
             id1: "https://example.com/images/ticket-icon.png" // Optional: attach image for iOS
@@ -177,6 +177,7 @@ router.post('/', async function(req, res, next)
         seats: seatsToRangesByRow(group.seats)
       }));
 
+
       // Generate PDF only (not insert)
       const pdfBuffer = await receiptGenerator.generate(groupedRecords);
       const pdfBase64 = pdfBuffer.toString('base64');
@@ -187,13 +188,19 @@ router.post('/', async function(req, res, next)
     }
     else if(req.body.purpose === "retrieve") 
     {
-  
       // Instantiate controller and retrieve records
       var controller = new TicketSalesController();
       var result = await controller.getSalesRecords();
-      //if (io) io.emit('retrieve-updated');
 
-      return res.json({result});
+      // Emit all records to clients via WebSocket
+      if (io && result && result.length > 0) {
+        io.emit('data-retrieve', {
+          message: 'Data-Retrieve successfully',
+          allReservations: result
+        });
+      }
+
+      return res.json({ result });
     }
   } 
   catch (error) {  

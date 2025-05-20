@@ -1,0 +1,788 @@
+.seat-reservation-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.seat-reservation-panel h2 {
+  color: #0078d4;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.reservation-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.location-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.location-filter label {
+  font-weight: 600;
+}
+
+.location-filter select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.reserve-button {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.reserve-button:hover:not(:disabled) {
+  background-color: #006cc1;
+}
+
+.reserve-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Two-column layout */
+.reservation-layout {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Left column - Seating Plan */
+.seating-plan-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0; /* Important for preventing overflow */
+  overflow-x: auto; /* Enable horizontal scrolling if needed */
+}
+
+.seating-plan-wrapper {
+  min-width: 600px; /* Minimum width to ensure visibility */
+}
+
+/* Right column - Info panels */
+.info-column {
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Info panels styling */
+.info-panel {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.info-panel h3 {
+  color: #0078d4;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Live Availability styling */
+.availability-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.availability-metric {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.location-availability {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.location-name {
+  width: 100px;
+}
+
+.availability-bar-container {
+  flex-grow: 1;
+  height: 12px;
+  background-color: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.availability-bar {
+  height: 100%;
+  background-color: #4caf50;
+  border-radius: 6px;
+}
+
+.availability-count {
+  width: 60px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+/* AI Insights styling */
+.insights-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.insight-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.insight-item:last-child {
+  border-bottom: none;
+}
+
+.insight-icon {
+  font-size: 1.2rem;
+}
+
+/* Notifications styling */
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  align-items: center;
+}
+
+.notification-item.info {
+  background-color: #e3f2fd;
+}
+
+.notification-item.warning {
+  background-color: #fff3e0;
+}
+
+.notification-item.alert {
+  background-color: #ffebee;
+}
+
+.notification-icon {
+  font-size: 1.2rem;
+}
+
+/* Add to filepath: /Users/moseslee/Desktop/ecss_volunteer_performance/frontend/src/components/SeatReservationPanel.css */
+
+.view-seating-plan-btn {
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal overlay styling for seating plan popup */
+.seating-plan-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;  /* High z-index to appear on top of everything */
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.seating-plan-modal {
+  background-color: #1a1a1a;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;  /* Even higher z-index than the overlay */
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.seating-plan-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #333;
+}
+
+.seating-plan-modal-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.close-modal-btn:hover {
+  color: white;
+}
+
+.seating-plan-modal-body {
+  overflow-y: auto;
+  padding: 15px;
+  max-height: calc(90vh - 70px); /* Account for header height */
+}
+
+/* Make sure your main seating plan container doesn't have fixed height */
+.seating-plan-container {
+  max-height: none; /* Override any max-height if present */
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .reservation-layout {
+    flex-direction: column;
+  }
+  
+  .info-column {
+    width: 100%;
+  }
+  
+  .seating-plan-wrapper {
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .reservation-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .location-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .location-filter select {
+    width: 100%;
+  }
+  
+  .reserve-button {
+    width: 100%;
+  }
+}
+
+/* Add to your SeatReservationPanel.css */
+.registration-form-section {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #1f1f1f;
+  border-radius: 10px;
+  width: 100%;
+}
+
+.registration-form-section h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: white;
+  text-align: center;
+  font-size: 2rem;
+}
+
+/* Vertical radio buttons for location */
+.location-radio-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.location-radio-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+/* Vertical radio buttons for payment method */
+.payment-method-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.payment-method-container label {
+  margin-right: 0;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Add more space between section header and first radio button */
+.info-label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* Add to your SeatReservationPanel.css */
+.availability-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  background-color: #222;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.availability-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.metric-value.available {
+  color: #4CAF50;
+}
+
+.metric-value.reserved {
+  color: #ff9800;
+}
+
+h4 {
+  margin: 20px 0 15px;
+  font-size: 1.1rem;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.location-availability {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #222;
+  border-radius: 8px;
+}
+
+.location-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.location-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.location-details {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.location-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-value {
+  font-weight: bold;
+  margin: 0 5px;
+}
+
+.status-value.available {
+  color: #4CAF50;
+}
+
+.status-value.reserved {
+  color: #ff9800;
+}
+
+.availability-bar-container {
+  margin-top: 10px;
+}
+
+.availability-bar-wrapper {
+  display: flex;
+  flex-direction: row;
+  height: 20px;
+  width: 100%;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #444;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  margin-bottom: 10px;
+}
+
+.available-bar {
+  background: linear-gradient(to right, #2ebb67, #4efa85);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+.reserved-bar {
+  background: linear-gradient(to right, #e69321, #ffb74d);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+/* Special styling for CT Hub with bar outside */
+.ct-hub-special {
+  position: relative;
+  margin-bottom: 40px; /* Extra space for the bars below */
+}
+
+.ct-hub-special .location-container {
+  background-color: #222;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.ct-hub-special .availability-bar-container.outside-box {
+  position: relative;
+  padding: 0 15px;
+  margin-top: 15px;
+}
+
+/* Scrollable container for locations */
+.locations-scrollable-container {
+  max-height: 300px;  /* Adjust height as needed */
+  overflow-y: auto;
+  padding-right: 8px; /* Space for scrollbar */
+  margin-bottom: 20px;
+  
+  /* Customize scrollbar for WebKit browsers */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
+}
+
+/* High contrast theme for location items */
+.location-availability.high-contrast {
+  background-color: #1a1a1a;
+  border: 1px solid #444;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.high-contrast .location-header {
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.high-contrast .location-name {
+  color: #ffffff; /* Brighter white */
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.high-contrast .location-total {
+  color: #dddddd;
+}
+
+.high-contrast .status-label {
+  color: #aaaaaa;
+}
+
+.high-contrast .status-value.available {
+  color: #4efa85; /* Brighter green */
+  font-weight: bold;
+  text-shadow: 0 0 3px rgba(78,250,133,0.4);
+}
+
+.high-contrast .status-value.reserved {
+  color: #ffb74d; /* Brighter orange */
+  font-weight: bold;
+  text-shadow: 0 0 3px rgba(255,183,77,0.4);
+}
+
+/* Enhanced progress bars */
+.high-contrast .availability-bar-wrapper {
+  height: 14px; /* Slightly taller */
+  background-color: #333;
+  border-radius: 7px;
+  border: 1px solid #444;
+  margin-bottom: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.high-contrast .available-bar {
+  background: linear-gradient(to right, #2ebb67, #4efa85);
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+}
+
+.high-contrast .reserved-bar {
+  background: linear-gradient(to right, #e69321, #ffb74d);
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+}
+
+/* Enhanced availability bar styling for vertical layout */
+.vertical-layout .availability-bar-container {
+  margin: 0;
+  padding: 5px 0;
+  width: 100%; /* Ensure full width */
+  min-height: 16px; /* Minimum height to ensure visibility */
+  display: block; /* Force block display */
+}
+
+.vertical-layout .availability-bar-wrapper {
+  height: 16px; /* Increase height for better visibility */
+  margin-bottom: 10px;
+  background-color: #333;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #444;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  display: block; /* Ensure block display */
+}
+
+/* Make sure the bars have minimum dimensions */
+.vertical-layout .available-bar,
+.vertical-layout .reserved-bar {
+  min-height: 16px;
+  min-width: 10px; /* Ensure at least some width is visible */
+  display: block;
+}
+
+/* Show stats clearly below bars */
+.vertical-layout .location-stats {
+  display: flex;
+  flex-direction: column; /* Stack vertically */
+  gap: 8px;
+  border-top: 1px solid #444;
+  padding-top: 10px;
+  width: 100%;
+}
+
+.vertical-layout .location-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Spread content across */
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+/* Style the percentage values more prominently */
+.vertical-layout .status-percentage {
+  font-weight: bold;
+  margin-left: auto; /* Push to right */
+}
+
+/* Clear vertical sections for location items */
+.location-availability.vertical-layout {
+  display: flex;
+  flex-direction: column;
+  background-color: #1a1a1a;
+  border: 1px solid #444;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Common styling for all sections */
+.location-section {
+  padding: 15px;
+  border-bottom: 1px solid #444;
+}
+
+.location-section:last-child {
+  border-bottom: none;
+}
+
+/* Section 1: Header styling */
+.location-header-section {
+  background-color: #222;
+}
+
+.location-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.location-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* Section 2: Bars styling */
+.location-bars-section {
+  background-color: #1a1a1a;
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+/* Single combined bar container */
+.availability-bar-wrapper {
+  display: flex;
+  flex-direction: row;
+  height: 20px;
+  width: 100%;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #444;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  position: relative; /* For positioning the segments */
+}
+
+/* Available seats portion (left side) */
+.available-bar {
+  background: linear-gradient(to right, #2ebb67, #4efa85);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+/* Reserved seats portion (right side) */
+.reserved-bar {
+  background: linear-gradient(to right, #e69321, #ffb74d);
+  height: 100%;
+  transition: width 0.3s;
+}
+
+/* Combined bar label */
+.combined-bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0 10px 0;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.label-available {
+  color: #4efa85;
+  font-weight: bold;
+}
+
+.label-reserved {
+  color: #ffb74d;
+  font-weight: bold;
+}
+
+/* Section 3: Stats styling */
+.location-stats-section {
+  background-color: #222;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stats-label {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+}
+
+.stats-value {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.stats-value.available {
+  color: #4efa85;
+}
+
+.stats-value.reserved {
+  color: #ffb74d;
+}

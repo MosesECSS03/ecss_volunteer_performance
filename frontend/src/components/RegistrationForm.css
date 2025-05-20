@@ -1,0 +1,150 @@
+.reservation-form {
+  display: block; /* Changed from flex to block */
+  width: 90%; /* Full width */
+  padding: 20px;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  margin-bottom: 20px;
+}
+
+.reservation-form h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: white;
+  text-align: center;
+}
+
+/* Improved contrast for labels */
+.reservation-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #ffffff; /* Brighter white for better contrast */
+  font-weight: 500; /* Make slightly bolder */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5); /* Add subtle text shadow for better readability */
+}
+
+.reservation-form input[type="text"] {
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: white;
+}
+
+/* Style for location container - matching payment method style */
+.location-radio-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 0;
+}
+
+/* Style for the location section label */
+.location-radio-row .info-label {
+  align-self: flex-start;  /* Left-align like payment method */
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #f0f0f0;
+}
+
+/* Container for location radio options */
+.location-options-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Each radio button and its label in a row */
+.location-radio-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+}
+
+.location-radio-label input[type="radio"] {
+  margin-right: 8px;
+}
+
+/* Style for payment method container */
+.payment-method-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+/* Style for the section label */
+.payment-method-container > label:first-child {
+  align-self: flex-start;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* Stack radio options vertically */
+.payment-options-row {
+  display: flex;
+  flex-direction: column; /* Change to column to stack vertically */
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Each radio button and its label in a row */
+.payment-options-row label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+}
+
+.payment-options-row input[type="radio"] {
+  margin-right: 8px;
+}
+
+/* Style for selected seat count as textbox */
+.seat-count-display {
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  width: 60px;
+  display: inline-block;
+}
+
+.reservation-form button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin: 20px auto 0; /* Centered with margin */
+  display: block; /* Ensures block display */
+  padding: 10px 24px;
+  font-weight: bold;
+}
+
+.reservation-form button:hover {
+  background-color: #3e8e41;
+}
+
+.reservation-form button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+/* Add a focus style for better accessibility */
+.reservation-form input:focus,
+.reservation-form button:focus {
+  outline: 2px solid #4CA1AF;
+  outline-offset: 2px;
+}

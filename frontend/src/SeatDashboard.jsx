@@ -296,16 +296,16 @@ class SeatDashboard extends Component {
                     const isVIP =
                       (rowIdx === 0 || rowIdx === 1) && (colIdx >= 7 && colIdx <= 19);
                     const seatColor = isReserved
-                      ? sectionColors.reserved
+                      ? "#888" // your custom reserved color
                       : isSelected
-                      ? sectionColors.selected
+                      ? "#FFD700" // your custom selected color
                       : isVIP
-                      ? sectionColors.vip
-                      : sectionColors.available;
+                      ? "#FF8800" // your custom VIP color
+                      : "#0050A0"; // your custom available color
                     return (
                       <button
                         key={seatLabel}
-                        className="seat"
+                        className={`seat${isSelected ? ' selected' : ''}${isVIP ? ' vip' : ''}${isReserved ? ' reserved' : ''}`}
                         onClick={
                           !isReserved
                             ? (e) => {
@@ -316,7 +316,7 @@ class SeatDashboard extends Component {
                         }
                         disabled={isReserved}
                         style={{
-                          background: isVIP ? ' #734F96' : 'none',
+                          background: 'none',
                           border: 'none',
                           padding: 0,
                           cursor: !isReserved ? 'pointer' : 'not-allowed',
