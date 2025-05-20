@@ -101,10 +101,10 @@ router.post('/', async function(req, res, next)
           title: 'New Reservation!',
           message: `Booking No: ${bookingNo}\nSeats: ${seats.join(', ')}`,
           // Platform-specific URLs
-          web_url: "http://localhost:3000", // Web browser users go here
+          //web_url: "http://localhost:3000", // Web browser users go here
           app_url: "ecssapp://reservations", // Mobile app users go here (deep link)
           // You can use these in production:
-          // web_url: 'https://white-stone-093a71d10.6.azurestaticapps.net/',
+          web_url: 'https://white-stone-093a71d10.6.azurestaticapps.net/',
           // Additional platform customizations
           /*ios_attachments: {
             id1: "https://example.com/images/ticket-icon.png" // Optional: attach image for iOS
