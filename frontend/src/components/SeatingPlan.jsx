@@ -59,7 +59,7 @@ function isVipSeat(rowIdx, colIdx) {
 
 const LOCATION_ROWS = {
   'CT Hub': ['C', 'D', 'I', 'J', 'M'],
-  'Tampines': ['E', 'F', 'K', 'L'],
+  'Tampines 253 Centre and Tampines North Community Club': ['E', 'F', 'K', 'L'],
   'Pasir Ris West Wellness Centre': ['G', 'H']
 };
 
@@ -260,7 +260,7 @@ class SeatingPlan extends Component {
     // Legend and row location data
     const rowLocationGroups = [
       { name: 'CT Hub', ranges: ['3-5', '9-11', '13'] }, // C-E, I-K, M
-      { name: 'Tampines', ranges: ['6-7', '11-12'] },    // F-G, K-L
+      { name: 'Tampines 253 Centre and Tampines North Community Club', ranges: ['6-7', '11-12'] },    // F-G, K-L
       { name: 'Pasir Ris West Wellness Centre', ranges: ['8-9'] }, // H-I
     ];
 
