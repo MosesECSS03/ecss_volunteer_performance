@@ -43,6 +43,7 @@ class DatabaseConnectivity {
                 else {
                 result = await table.insertOne(records);
                 }
+                console.log("Insert Result:", result);
                 //console.log("Insert Result:", result);
                 return { acknowledged: result.acknowledged }; 
             }
@@ -61,7 +62,7 @@ class DatabaseConnectivity {
             if (db) {
                 const table = db.collection(collectionName);
                 result = await table.find({}).toArray();
-                //console.log("Retrieve Result:", result);
+                console.log("Retrieve Result:", result);
                 return { acknowledged: true, data: result }; // Return the retrieved data
             }
         } catch (error) {

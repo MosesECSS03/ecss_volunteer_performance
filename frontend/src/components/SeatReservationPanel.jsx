@@ -45,9 +45,12 @@ class SeatReservationPanel extends Component {
       cfmSelectedSeatsCount: 0, // <-- Add this line
       locationFilter: 'all',
       location: '', // add this
-      notifications: [
-        { id: 1, type: 'info', message: 'Select seats to reserve them' },
-        { id: 2, type: 'warning', message: 'VIP seats require special access' }
+      notes: [
+        { id: 1, type: 'info', message: 'Seat can be auto or manual selected' },
+        { id: 2, type: 'info', message: 'Press the button to view the seating plan popup' },
+        { id: 3, type: 'info', message: 'Click on the "Get Next Seats' },
+        { id: 4, type: 'info', message: 'Submit the form to book the seat(s)' },
+        { id: 5, type: 'warning', message: 'VIP seats require special access' }
       ],
       isSeatingPlanOpen: false, // New state to track popup visibility
       availabilityData: {
@@ -58,7 +61,8 @@ class SeatReservationPanel extends Component {
       },
       isLoading: true,
       error: null,
-      records: 0
+      records: 0,
+      notifications: [], // <-- Add this line
     };
 
     // Add this in your constructor
@@ -68,11 +72,13 @@ class SeatReservationPanel extends Component {
   // Fetch data when component mounts
   componentDidMount() {
     this.fetchAvailabilityData();
+    this.fetchNotifications(); // <-- Add this line
 
     this.socket = io(API_BASE_URL);
     this.socket.on('reservation-updated', (data) => {
       console.log("Socket event received123", data);
       this.fetchAvailabilityData();
+      this.fetchNotifications(); // Optionally refresh notifications on update
     });
 
     window.addEventListener('onesignal-notification', (e) => {
@@ -268,11 +274,30 @@ class SeatReservationPanel extends Component {
       // Format current time as dd/mm/yyyy hh:mm:ss
       const now = new Date();
       const pad = (n) => n.toString().padStart(2, '0');
-      const time = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const notificationDate = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const time = notificationDate; // Make time and notificationDate the same
 
       // Add bookingNo and time to formData
       const submission = { ...formData, bookingNo, time };
       console.log("Registration submitted:", submission);
+
+      // --- Check for overlapping reserved seats before proceeding ---
+      const { reservedSeats = [] } = this.state;
+      const selectedSeats = Array.isArray(submission.seats)
+        ? submission.seats
+        : (typeof submission.seats === 'string' ? submission.seats.split(',').map(s => s.trim()) : []);
+
+      // Check for overlap
+      const overlap = selectedSeats.filter(seat => reservedSeats.includes(seat));
+      if (overlap.length > 0) {
+        alert(`The following seats are already reserved: ${overlap.join(', ')}. Please select different seats.`);
+        // Open the seating plan popup and show the current selection
+        this.setState({
+          isSeatingPlanOpen: true,
+          selectedSeats: selectedSeats // show what user tried to select
+        });
+        return;
+      }
 
       const insertResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "insert", records: [submission] });
       console.log("Insert response:", insertResponse.data);
@@ -304,6 +329,18 @@ class SeatReservationPanel extends Component {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+        }
+        console.log("Sending notification to backend:");
+        // Store notification in backend
+        try {
+          await axios.post(`${API_BASE_URL}/notifications`, {
+            purpose: "insert",
+            type: "reservation",
+            date: notificationDate,
+            description: `Booking for ${submission.name} (${submission.bookingNo}) - ${submission.seats.join(', ')}`,
+          });
+        } catch (notifyErr) {
+          console.error("Failed to store notification:", notifyErr);
         }
 
         this.setState(prevState => ({
@@ -371,6 +408,23 @@ class SeatReservationPanel extends Component {
         { id: Date.now(), ...notification }
       ]
     }));
+  };
+
+  // New method to fetch notifications from the server
+  fetchNotifications = async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/notifications`, { purpose: "retrieve" });
+      console.log("Notifications", response.data.data.data);
+      if (response.data.success && response.data.data.data) {
+        const notifications = response.data.data.data.map((n, idx) => ({
+          ...n,
+          id: n._id || idx, // Ensure React key
+        }));
+        this.setState({ notifications });
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
   };
 
   render() {
@@ -474,7 +528,7 @@ class SeatReservationPanel extends Component {
                   <div className="availability-summary">
                     <div className="availability-metric">
                       <span className="metric-label">Total Seats:</span>
-                      <span className="metric-value">{availabilityData.totalSeats}</span>
+                      <span className="metric-value" style={{ fontWeight: 'bold', color: '#ffffff'}}>{availabilityData.totalSeats}</span>
                     </div>
                     <div className="availability-metric">
                       <span className="metric-label">Available:</span>
@@ -542,76 +596,80 @@ class SeatReservationPanel extends Component {
                 </div>
               )}
             </div>
-            
-            {/* AI Insights Section */}
-           {/* <div className="info-panel ai-insights">
-              <h3>AI Insights</h3>
-              <ul className="insights-list">
-                {aiInsights.map(insight => (
-                  <li key={insight.id} className="insight-item">
-                    <span className="insight-icon">💡</span>
-                    <span className="insight-message">{insight.message}</span>
+
+            {/* Notes Section */}
+            <div className="info-panel notes">
+              <h3>Notes</h3>
+              <ul className="notes-list">
+                {this.state.notes.map(note => (
+                  <li key={note.id} className={`note-item ${note.type}`}>
+                    <span className="note-icon">
+                      {note.type === 'info'
+                        ? 'ℹ️'
+                        : note.type === 'warning'
+                        ? '⚠️'
+                        : '📝'}
+                    </span>
+                    <span className="note-message">{note.message}</span>
                   </li>
                 ))}
               </ul>
-            </div>*/}
+            </div>
             
             {/* Notifications Section */}
-            <div className="info-panel notifications">
-              <h3>Notifications</h3>
+           <div className="info-panel notifications">
+              <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                Notifications
+                <button
+                  style={{
+                    fontSize: '1rem',
+                    padding: '4px 12px',
+                    background: '#444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => this.setState({ notifications: [] })}
+                  disabled={this.state.notifications.length === 0}
+                  title="Clear all notifications"
+                >
+                  Clear
+                </button>
+              </h3>
               <div className="notifications-list">
-                {notifications.map(notification => (
-                  <div key={notification.id} className={`notification-item ${notification.type}`}>
-                    <span className="notification-icon">
-                      {notification.type === 'info' ? 'ℹ️' : 
-                       notification.type === 'warning' ? '⚠️' : '📢'}
-                    </span>
-                    <span className="notification-message">{notification.message}</span>
+                {this.state.notifications.length === 0 ? (
+                  <div style={{ color: '#888', fontStyle: 'italic', padding: '12px' }}>
+                    No notifications.
                   </div>
-                ))}
+                ) : (
+                  this.state.notifications.map(notification => (
+                    <div key={notification.id} className={`notification-item ${notification.type}`}>
+                      <div className="notification-header" style={{ fontWeight: 'bold', marginBottom: 2 }}>
+                        <span className="notification-icon">
+                          {notification.type === 'info'
+                            ? 'ℹ️'
+                            : notification.type === 'warning'
+                            ? '⚠️'
+                            : notification.type === 'reservation'
+                            ? '🎟️'
+                            : '📢'}
+                        </span>
+                        <span style={{ marginLeft: 8 }}>
+                          {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}{' '}
+                          {notification.date}
+                        </span>
+                      </div>
+                      <div className="notification-message" style={{ marginLeft: 28 }}>
+                        {notification.description || notification.message}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
-        <div
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    margin: '12px 0'
-  }}
->
-  <input
-    type="number"
-    min="1"
-    max="10"
-    value={this.props.noOfReservedSeats}
-    onChange={e => this.props.onSelectedSeatsCountChange(e.target.value)}
-    style={{
-      width: '60px !important',
-      padding: '4px 8px !important',
-      fontSize: '1rem !important',
-      borderRadius: '4px !important',
-      border: '1px solid #ccc !important',
-      marginRight: '0 !important'
-    }}
-  />
-  <button
-    onClick={this.handleAutoSelectSeats}
-    style={{
-      padding: '4px 14px !important',
-      fontSize: '1rem !important',
-      borderRadius: '4px !important',
-      background: '#0078d4 !important',
-      color: '#fff !important',
-      border: 'none !important',
-      fontWeight: 'bold !important',
-      cursor: 'pointer !important'
-    }}
-  >
-    Get Next Seats
-  </button>
-</div>
       </div>
     );
   }

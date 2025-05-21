@@ -23,6 +23,33 @@ function toTitleCase(str) {
   return str.replace(/\b\w/g, char => char.toUpperCase());
 }
 
+// Helper to group consecutive seats into ranges (e.g., A01, A02, A03 -> A01-A03)
+function formatSeatRanges(seats) {
+  if (!seats || seats.length === 0) return '';
+  // Format and sort seats
+  const formatted = seats.map(formatSeatLabel).sort();
+  const ranges = [];
+  let start = formatted[0];
+  let end = formatted[0];
+
+  for (let i = 1; i < formatted.length; i++) {
+    const prev = formatted[i - 1];
+    const curr = formatted[i];
+    // Check if same row and consecutive number
+    if (
+      curr[0] === prev[0] &&
+      parseInt(curr.slice(1), 10) === parseInt(prev.slice(1), 10) + 1
+    ) {
+      end = curr;
+    } else {
+      ranges.push(start === end ? start : `${start}-${end}`);
+      start = end = curr;
+    }
+  }
+  ranges.push(start === end ? start : `${start}-${end}`);
+  return ranges.join(', ');
+}
+
 class RegistrationForm extends Component {
   constructor(props) {
     super(props);
@@ -226,6 +253,11 @@ class RegistrationForm extends Component {
             Get Next Seats
           </button>
         </div>
+        {reservedSeats && reservedSeats.length > 0 && (
+          <div style={{ margin: '12px 0', fontSize: '1.3rem', color: '#0078d4' }}>
+            <strong>Selected Seats:</strong> {formatSeatRanges(reservedSeats)}
+          </div>
+        )}
         <div style={{ marginTop: 16 }}>
           <label style={{ fontSize: '1.5rem', width: '100%' }}>
             Total Price $

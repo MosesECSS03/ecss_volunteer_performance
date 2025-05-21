@@ -181,16 +181,22 @@ class ReportGenerator extends Component {
           <div className="option-group">
             <h3>Locations</h3>
             <div className="checkbox-group">
-              {allLocations.map(location => (
-                <label key={location}>
-                  <input 
-                    type="checkbox"
-                    checked={locations.includes(location)}
-                    onChange={() => this.handleLocationToggle(location)}
-                  />
-                  {location}
-                </label>
-              ))}
+              {allLocations.length === 0 ? (
+                <div style={{ color: '#888', fontStyle: 'italic' }}>
+                  No locations available.
+                </div>
+              ) : (
+                allLocations.map(location => (
+                  <label key={location}>
+                    <input 
+                      type="checkbox"
+                      checked={locations.includes(location)}
+                      onChange={() => this.handleLocationToggle(location)}
+                    />
+                    {location}
+                  </label>
+                ))
+              )}
             </div>
             <div className="small-report-actions">
               {/*<button onClick={this.handleGeneratePDF} className="small-btn red-btn">Generate PDF</button>*/}
