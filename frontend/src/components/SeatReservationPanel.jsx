@@ -48,9 +48,13 @@ class SeatReservationPanel extends Component {
       notes: [
         { id: 1, type: 'info', message: 'Seat can be auto or manual selected' },
         { id: 2, type: 'info', message: 'Press the button to view the seating plan popup' },
-        { id: 3, type: 'info', message: 'Click on the "Get Next Seats' },
+        { id: 3, type: 'info', message: 'Click on the "Get Next Seats" to auto-select next available seats' },
         { id: 4, type: 'info', message: 'Submit the form to book the seat(s)' },
-        { id: 5, type: 'warning', message: 'VIP seats require special access' }
+        { id: 5, type: 'warning', message: 'Submit the form to book the seat(s)' },
+        { id: 6, type: 'warning', message: 'Each booking transaction must be at $35.' },
+        { id: 7, type: 'warning', message: 'VIP seats require special access' },
+        { id: 8, type: 'general', message: 'Do not need to worry if there is an overlapping of reserved and selected seats.' },
+        { id: 9, type: 'general', message: 'All data and information are updated real time and live' },
       ],
       isSeatingPlanOpen: false, // New state to track popup visibility
       availabilityData: {
