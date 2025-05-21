@@ -45,8 +45,9 @@ const CinemaChairSVG1 = ({ fillColor, seatNumber, size = 100 }) => (
   </div>
 );
 
+const ROW_LETTERS = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
 function rowNumberToLetter(rowNum) {
-  return String.fromCharCode(67 + rowNum);
+  return ROW_LETTERS[rowNum] || '';
 }
 
 function isVipSeat(rowIdx, colIdx) {
@@ -59,8 +60,8 @@ function isVipSeat(rowIdx, colIdx) {
 
 const LOCATION_ROWS = {
   'CT Hub': ['C', 'D', 'I', 'J', 'M'],
-  'Tampines 253 Centre and Tampines North Community Club': ['E', 'F', 'K', 'L'],
-  'Pasir Ris West Wellness Centre': ['G', 'H']
+  'Pasir Ris West Wellness Centre': ['G', 'H'],
+  'Tampines North Community Club': ['E', 'F', 'K', 'L'],
 };
 
 class SeatingPlan extends Component {
@@ -260,7 +261,7 @@ class SeatingPlan extends Component {
     // Legend and row location data
     const rowLocationGroups = [
       { name: 'CT Hub', ranges: ['3-5', '9-11', '13'] }, // C-E, I-K, M
-      { name: 'Tampines 253 Centre and Tampines North Community Club', ranges: ['6-7', '11-12'] },    // F-G, K-L
+      { name: 'Tampines North Community Club', ranges: ['6-7', '11-12'] },    // F-G, K-L
       { name: 'Pasir Ris West Wellness Centre', ranges: ['8-9'] }, // H-I
     ];
 
@@ -307,6 +308,27 @@ class SeatingPlan extends Component {
           result.push(`${rangeStart.label}-${rangeEnd.label}`);
         }
       }
+      return result;
+    }
+
+    // Helper to group consecutive row letters
+    function groupConsecutiveRows(rows) {
+      if (!rows.length) return [];
+      // Convert row letters to their indices in ROW_LETTERS
+      const indices = rows.map(r => ROW_LETTERS.indexOf(r)).sort((a, b) => a - b);
+      const result = [];
+      let start = indices[0];
+      let end = indices[0];
+
+      for (let i = 1; i < indices.length; i++) {
+        if (indices[i] === end + 1) {
+          end = indices[i];
+        } else {
+          result.push(start === end ? ROW_LETTERS[start] : `${ROW_LETTERS[start]}-${ROW_LETTERS[end]}`);
+          start = end = indices[i];
+        }
+      }
+      result.push(start === end ? ROW_LETTERS[start] : `${ROW_LETTERS[start]}-${ROW_LETTERS[end]}`);
       return result;
     }
 
@@ -508,20 +530,9 @@ class SeatingPlan extends Component {
               Row Locations
             </div>
             <div style={{ marginTop: 12 }}>
-              {rowLocationGroups.map((loc, idx) => (
-                <div key={idx} style={{ marginBottom: 10 }}>
-                  Rows&nbsp;
-                  {loc.ranges.map(range => {
-                    if (range.includes('-')) {
-                      const [start, end] = range.split('-').map(Number);
-                      return (
-                        rowNumberToLetter(start - 1) + '-' + rowNumberToLetter(end - 1)
-                      );
-                    } else {
-                      return rowNumberToLetter(Number(range) - 1);
-                    }
-                  }).join(', ')}
-                  : {loc.name}
+              {Object.entries(LOCATION_ROWS).map(([locName, rowLetters]) => (
+                <div key={locName} style={{ marginBottom: 10 }}>
+                  Rows {groupConsecutiveRows(rowLetters).join(', ')}: {locName}
                 </div>
               ))}
             </div>

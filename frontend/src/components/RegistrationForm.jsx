@@ -4,7 +4,7 @@ import './RegistrationForm.css';
 const LOCATIONS = [
   "CT Hub",
   "Pasir Ris West Wellness Centre",
-  "Tampines 253 Centre and Tampines North Community Club"
+  "Tampines North Community Club"
 ];
 
 function formatSeatLabel(seat) {
@@ -86,10 +86,6 @@ class RegistrationForm extends Component {
     this.setState({ [name]: value });
   };
 
-  handleLocationChange = (e) => {
-    this.setState({ location: e.target.value });
-  };
-
   handlePaymentTypeChange = (e) => {
     this.setState({ paymentType: e.target.value });
   };
@@ -98,17 +94,22 @@ class RegistrationForm extends Component {
     this.setState({ paymentRef: e.target.value });
   };
 
+  handleStaffDropdownChange = (e) => {
+    this.setState({ staffName: e.target.value });
+  };
+
   handleSubmit = (e) => {
     console.log("Submitting form...");
     e.preventDefault();
-    let { name, staffName, paymentType, paymentRef, price } = this.state;
-    const { selectedSeatsCount, reservedSeats, location } = this.props; // get location from props
+    let { name, paymentType, paymentRef, price } = this.state;
+    // Use staffName and location from props (the source of truth)
+    const { staffName, location, selectedSeatsCount, reservedSeats } = this.props;
     name = toTitleCase(name.trim());
-    staffName = toTitleCase(staffName.trim());
-    if (!name || !staffName || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
+    const staffNameTitle = toTitleCase((staffName || '').trim());
+    if (!name || !staffNameTitle || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
     this.props.onSubmit({
       name,
-      staffName,
+      staffName: staffNameTitle,
       location,
       paymentType,
       paymentRef,
@@ -127,9 +128,37 @@ class RegistrationForm extends Component {
   };
 
   render() {
-    const { name, staffName, location, paymentType, paymentRef } = this.state;
-    const { selectedSeatsCount, reservedSeats } = this.props;
-    const price = (selectedSeatsCount || 0) * 35;
+    const { name, location, paymentType, paymentRef } = this.state;
+    const { selectedSeatsCount, reservedSeats, staffName } = this.props;
+    // Determine staff name logic
+    let staffInputProps = {
+      name: "staffName",
+      value: this.props.staffName,
+      required: true,
+      onChange: this.handleChange,
+      placeholder: "Enter staff name",
+      style: {
+        fontSize: '2rem',
+        width: '100%',
+        color: '#ffffff',
+        fontWeight: 500,
+        textShadow: '0 1px 1px rgba(0, 0, 0, 0.5)'
+      }
+    };
+    let showDropdown = false;
+    let dropdownOptions = [];
+
+    if (location === "CT Hub") {
+      staffInputProps.value = STAFF_BY_LOCATION["CT Hub"];
+      staffInputProps.readOnly = true;
+    } else if (location === "Tampines North Community Club") {
+      staffInputProps.value = STAFF_BY_LOCATION["Tampines North Community Club"];
+      staffInputProps.readOnly = true;
+    } else if (location === "Pasir Ris West Wellness Centre") {
+      staffInputProps.readOnly = true;
+      showDropdown = true;
+      dropdownOptions = STAFF_BY_LOCATION["Pasir Ris West Wellness Centre"];
+    }
 
     return (
       <form className="reservation-form" onSubmit={this.handleSubmit}>
@@ -148,16 +177,24 @@ class RegistrationForm extends Component {
         </label>
         <label style={{ fontSize: '1.5rem' }}>
           Staff Name
-          <input
-            type="text"
-            name="staffName"
-            value={staffName}
-            required
-            onChange={this.handleChange}
-            placeholder="Enter staff name"
-            style={{ fontSize: '1.5rem' }}
-          />
+          <input style={{ fontSize: '1.5rem' }} {...staffInputProps} />
         </label>
+        {
+          this.props.staffDropdownOptions.length > 0 && (
+            <div style={{ margin: '0' }}>
+              <select
+                value={this.props.staffName}
+                onChange={e => this.props.onStaffNameChange(e.target.value)}
+                style={{ fontSize: '1.2rem', width: '100%', marginTop: 8 }}
+                required
+              >
+                <option value="">-- Select Staff --</option>
+                {this.props.staffDropdownOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+          )}
         <div className="location-radio-row" style={{ fontSize: '1.5rem' }}>
           <label style={{textAlign: 'center', width: '100%' }}>Location</label>
           {LOCATIONS.map(loc => (
@@ -167,7 +204,7 @@ class RegistrationForm extends Component {
                 name="location"
                 value={loc}
                 checked={this.props.location === loc}
-                onChange={() => this.props.onLocationChange(loc)}
+                onChange={this.props.onLocationChange}
                 required
                 style={{ width: 18, height: 18 }}
               />

@@ -11,6 +11,13 @@ const API_BASE_URL =
     ? "http://localhost:3001"
     : "https://ecss-performance-night-2025.azurewebsites.net";
 
+const STAFF_BY_LOCATION = {
+  "CT Hub": "Yeo Lih Yong",
+  "Tampines North Community Club": "Allison Teo",
+  "Pasir Ris West Wellness Centre": ["Jeniffer Lim", "Daryl Neo"]
+};
+
+
     // Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
 function expandSeatRanges(seatRanges) {
   const result = [];
@@ -67,6 +74,7 @@ class SeatReservationPanel extends Component {
       error: null,
       records: 0,
       notifications: [], // <-- Add this line
+      staffName: '', // <-- Add this line
     };
 
     // Add this in your constructor
@@ -173,7 +181,7 @@ class SeatReservationPanel extends Component {
     // Calculate per-location availability
     const locations = {
       'CT Hub': { total: 125, available: 125 },
-      'Tampines': { total: 100, available: 100 },
+      'Tampines North Community Club': { total: 100, available: 100 },
       'Pasir Ris West Wellness Centre': { total: 50, available: 50 }
     };
 
@@ -200,7 +208,7 @@ class SeatReservationPanel extends Component {
     if (['C', 'D', 'I', 'J', 'M'].includes(row)) {
       return 'CT Hub';
     } else if (['E', 'F', 'K', 'L'].includes(row)) {
-      return 'Tampines';
+      return 'Tampines North Community Club';
     } else if (['G', 'H'].includes(row)) {
       return 'Pasir Ris West Wellness Centre';
     }
@@ -399,9 +407,24 @@ class SeatReservationPanel extends Component {
     );
   };
   
-  // New method to handle location change
-  handleLocationChange = (location) => {
-    this.setState({ location });
+  handleLocationChange = (e) => {
+    const location = e.target.value;
+    let staffName = '';
+    if (location === "CT Hub") {
+      staffName = STAFF_BY_LOCATION["CT Hub"];
+    } else if (location === "Tampines North Community Club") {
+      staffName = STAFF_BY_LOCATION["Tampines North Community Club"];
+    }
+    // For Pasir Ris West Wellness Centre, staffName remains empty until selected from dropdown
+    this.setState({ location, staffName });
+  };
+
+  handleStaffNameChange = (staffName) => {
+    this.setState({ staffName });
+  };
+
+  handleStaffDropdownChange = (e) => {
+    this.props.onStaffNameChange(e.target.value);
   };
 
   addNotification = (notification) => {
@@ -506,12 +529,19 @@ class SeatReservationPanel extends Component {
             <div className="registration-form-section">
               <RegistrationForm
                 selectedSeatsCount={this.state.selectedSeatsCount}
-                reservedSeats={this.state.selectedSeats} // This is the array of selected seat numbers
+                reservedSeats={this.state.selectedSeats}
                 onSubmit={this.handleRegistrationSubmit}
                 onAutoSelectSeats={this.handleAutoSelectSeats}
                 onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
                 location={this.state.location}
                 onLocationChange={this.handleLocationChange}
+                staffName={this.state.staffName}
+                staffDropdownOptions={
+                  this.state.location === "Pasir Ris West Wellness Centre"
+                    ? ["Jeniffer Lim", "Daryl Neo"]
+                    : []
+                }
+                onStaffNameChange={this.handleStaffNameChange}
               />
             </div>
           </div>

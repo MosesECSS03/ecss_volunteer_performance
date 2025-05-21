@@ -827,6 +827,9 @@ h4 {
   margin: 0;
   padding: 0;
   list-style: none;
+  max-height: 180px;      /* Set your preferred height */
+  overflow-y: auto;       /* Enable vertical scrolling */
+  padding-right: 4px;     /* Optional: space for scrollbar */
 }
 
 .note-item {
