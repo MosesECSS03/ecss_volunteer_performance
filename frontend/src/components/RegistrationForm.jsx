@@ -102,10 +102,17 @@ class RegistrationForm extends Component {
     console.log("Submitting form...");
     e.preventDefault();
     let { name, paymentType, paymentRef, price } = this.state;
-    // Use staffName and location from props (the source of truth)
     const { staffName, location, selectedSeatsCount, reservedSeats } = this.props;
     name = toTitleCase(name.trim());
     const staffNameTitle = toTitleCase((staffName || '').trim());
+
+    // Convert price to float and check minimum
+    const priceFloat = parseFloat(price);
+    if (isNaN(priceFloat) || priceFloat < 35.00) {
+      window.alert("Total Price must be at least $35.00");
+      return;
+    }
+
     if (!name || !staffNameTitle || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
     this.props.onSubmit({
       name,
@@ -113,7 +120,7 @@ class RegistrationForm extends Component {
       location,
       paymentType,
       paymentRef,
-      price,
+      price: priceFloat,
       selectedSeatsCount,
       seats: (reservedSeats || []).map(formatSeatLabel),
     });
