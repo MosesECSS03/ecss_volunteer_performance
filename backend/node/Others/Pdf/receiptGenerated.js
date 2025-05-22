@@ -1,6 +1,7 @@
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const path = require('path');
+const crypto = require('crypto');
 
 class ReceiptGenerator {
   async generate(records) {
@@ -145,14 +146,19 @@ class ReceiptGenerator {
       let cell2Y = y + 5;
       doc.fontSize(12).font('Helvetica-Bold').text('Booking QR Code', tableLeft + colWidth + 1, cell2Y);
 
-      // QR Code content
-      const qrText = [
+      // QR Code content (plain text)
+      const qrPlainText = [
         `Name: ${record.name || ''}`,
         `Booking No: ${record.bookingNo || ''}`,
         `No of Tickets: ${record.selectedSeatsCount || 2}`,
         `Seats: ${Array.isArray(record.seats) ? record.seats.join(', ') : 'A01, A02, A03'}`,
         `Payment Ref: ${record.paymentRef || '91234567'}`
       ].join('\n');
+
+      // Encrypt the QR content
+      const qrText = encrypt(qrPlainText);
+
+      // Generate QR code with encrypted content
       const qrBuffer = await QRCode.toBuffer(qrText, { margin: 1, width: 100 });
 
       // Draw QR code in top right cell, as close to the left/top of the cell as possible but still inside
@@ -194,6 +200,17 @@ class ReceiptGenerator {
       doc.end();
     });
   }
+}
+
+// Define your secret key and IV (must be 32 bytes for AES-256, IV is 16 bytes)
+const ENCRYPTION_KEY = Buffer.from('happy123'.padEnd(32, '0')); // "happy123" padded to 32 bytes
+const IV = Buffer.from('1234567890123456'); // 16 bytes
+
+function encrypt(text) {
+  const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, IV);
+  let encrypted = cipher.update(text, 'utf8', 'base64');
+  encrypted += cipher.final('base64');
+  return encrypted;
 }
 
 module.exports = new ReceiptGenerator();
