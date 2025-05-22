@@ -19,7 +19,7 @@ const STAFF_BY_LOCATION = {
 };
 
 
-    // Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
+// Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
 function expandSeatRanges(seatRanges) {
   const result = [];
   seatRanges.forEach(range => {
@@ -42,6 +42,37 @@ function expandSeatRanges(seatRanges) {
     });
   });
   return result;
+}
+
+// New helper function to format seat ranges
+function formatSeatRanges(seats) {
+  if (!Array.isArray(seats) || seats.length === 0) return '';
+  // Sort seats by row and number
+  const sorted = [...seats].sort((a, b) => {
+    if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
+    return parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10);
+  });
+
+  const ranges = [];
+  let start = sorted[0];
+  let end = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = end;
+    const curr = sorted[i];
+    // Check if same row and consecutive number
+    if (
+      curr[0] === prev[0] &&
+      parseInt(curr.slice(1), 10) === parseInt(prev.slice(1), 10) + 1
+    ) {
+      end = curr;
+    } else {
+      ranges.push(start === end ? start : `${start} - ${end}`);
+      start = end = curr;
+    }
+  }
+  ranges.push(start === end ? start : `${start} - ${end}`);
+  return ranges.join(', ');
 }
 
 class SeatReservationPanel extends Component {
@@ -358,7 +389,7 @@ class SeatReservationPanel extends Component {
             purpose: "insert",
             type: "reservation",
             date: notificationDate,
-            description: `Booking for ${submission.name} (${submission.bookingNo}) - ${submission.seats.join(', ')}`,
+            description: `Booking:${submission.name} (${submission.bookingNo}) - ${formatSeatRanges(submission.seats)}`,
           });
         } catch (notifyErr) {
           console.error("Failed to store notification:", notifyErr);
