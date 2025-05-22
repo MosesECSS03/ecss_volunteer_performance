@@ -322,7 +322,7 @@ class RegistrationForm extends Component {
               type="text"
               name="price"
               value={this.props.price || ''}
-              onChange={e => this.setState({ price: e.target.value })}
+              onChange={e => this.props.onPriceChange(e.target.value)}
               style={{
                 fontSize: '1.5rem',
                 backgroundColor: '#333',

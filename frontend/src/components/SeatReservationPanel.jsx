@@ -451,6 +451,10 @@ class SeatReservationPanel extends Component {
     }));
   };
 
+  handlePriceChange = (price) => {
+    this.setState({ price });
+  };
+
   // New method to fetch notifications from the server
   fetchNotifications = async () => {
     try {
@@ -557,6 +561,7 @@ class SeatReservationPanel extends Component {
                 }
                 onStaffNameChange={this.handleStaffNameChange}
                 price={this.state.price} // <-- pass price here
+                onPriceChange={this.handlePriceChange}
               />
             </div>
           </div>
