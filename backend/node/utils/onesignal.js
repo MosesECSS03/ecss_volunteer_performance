@@ -5,30 +5,31 @@ const ONESIGNAL_APP_ID = '62117916-bc7c-4424-a12a-f6e54aa06cc5';
 const ONESIGNAL_API_KEY = 'Basic os_v2_app_miixsfv4prccjijk63suvidmyvm7nqsikitusvmkedxsb2rzugsl34k5btsmzu5fjzywwfsrhbza3aqx4rujtqciuhsxdrnr7fueydy';
 
 /**
- * Send a OneSignal push notification to all users.
+ * Send a OneSignal push notification to all users as a visible banner.
  */
 async function sendOneSignalNotification({ title, message, url }) {
   try {
     console.log("Sending OneSignal notification with:", { title, message, url });
-    
-    // Try multiple segments to reach more users
+
     const data = {
       app_id: ONESIGNAL_APP_ID,
-      included_segments: ["Active Users", "Engaged Users", "All"],  // Try multiple segments
-      // For testing with specific device
-      // include_player_ids: ["YOUR-TEST-DEVICE-ID"],
+      included_segments: ["Active Users", "Engaged Users", "All"],
       contents: { en: message },
       headings: { en: title },
       url: url,
-      // Make notification more prominent
       priority: 10,
-      ttl: 259200  // 3 days in seconds
+      ttl: 259200,
+      android_sound: "default",
+      ios_sound: "default",
+      chrome_web_icon: "./en.png", // Optional: your icon URL
+      chrome_web_image: "./en.png", // Optional: banner image
+      // Remove content_available/mutable_content to avoid silent notifications
     };
-    
+
     console.log("OneSignal request payload:", JSON.stringify(data));
-    
+
     const response = await axios.post(
-      'https://onesignal.com/api/v1/notifications', 
+      'https://onesignal.com/api/v1/notifications',
       data,
       {
         headers: {
@@ -37,7 +38,7 @@ async function sendOneSignalNotification({ title, message, url }) {
         }
       }
     );
-    
+
     console.log("OneSignal API response:", response.data);
     return response.data;
   } catch (error) {
