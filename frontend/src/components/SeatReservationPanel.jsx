@@ -4,6 +4,7 @@ import './SeatReservationPanel.css';
 import SeatingPlan from './SeatingPlan';
 import RegistrationForm from './RegistrationForm';
 import { io } from 'socket.io-client';
+//Latest
 
 // Define your API base URL - could be from environment variables
 const API_BASE_URL =
