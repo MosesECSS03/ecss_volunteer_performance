@@ -60,6 +60,7 @@ class RegistrationForm extends Component {
       paymentType: '',
       paymentRef: '',
       price: 0,
+      showPriceError: false, // <-- add this
     };
   }
 
@@ -109,7 +110,7 @@ class RegistrationForm extends Component {
     // Convert price to float and check minimum
     const priceFloat = parseFloat(price);
     if (isNaN(priceFloat) || priceFloat < 35.00) {
-      window.alert("Total Price must be at least $35.00");
+      this.setState({ showPriceError: true }); // <-- show popup
       return;
     }
 
@@ -132,6 +133,10 @@ class RegistrationForm extends Component {
       paymentRef: '',
       price: 0,
     });
+  };
+
+  closePriceError = () => {
+    this.setState({ showPriceError: false });
   };
 
   render() {
@@ -326,6 +331,53 @@ class RegistrationForm extends Component {
         <button type="submit" disabled={selectedSeatsCount === 0} style={{ fontSize: '1.5rem', padding: '10px 24px' }}>
           Submit
         </button>
+        {/* Popup Modal */}
+        {this.state.showPriceError && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+            }}
+          >
+            <div
+              style={{
+                background: '#fff',
+                color: '#222',
+                padding: '32px 24px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.2)',
+                minWidth: 300,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '1.3rem', marginBottom: 16 }}>
+                Total Price must be at least <b>$35.00</b>
+              </div>
+              <button
+                onClick={this.closePriceError}
+                style={{
+                  fontSize: '1.1rem',
+                  padding: '8px 20px',
+                  background: '#0078d4',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
       </form>
     );
   }
