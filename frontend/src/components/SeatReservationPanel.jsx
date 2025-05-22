@@ -75,6 +75,7 @@ class SeatReservationPanel extends Component {
       records: 0,
       notifications: [], // <-- Add this line
       staffName: '', // <-- Add this line
+      price: 0, // <-- Add this line
     };
 
     // Add this in your constructor
@@ -275,30 +276,37 @@ class SeatReservationPanel extends Component {
     }));
   }
 
-  handleRegistrationSubmit = async (formData) => 
-  {
+  handleRegistrationSubmit = async (formData) => {
     try {
       const year = new Date().getFullYear();
       let nextNumber = this.state.records + 1;
       const padded = String(nextNumber).padStart(3, '0');
       const bookingNo = `ECSS/MC${year}/${padded}`;
-
+  
       // Format current time as dd/mm/yyyy hh:mm:ss
       const now = new Date();
       const pad = (n) => n.toString().padStart(2, '0');
       const notificationDate = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-      const time = notificationDate; // Make time and notificationDate the same
-
-      // Add bookingNo and time to formData
-      const submission = { ...formData, bookingNo, time };
+      const time = notificationDate;
+  
+      // Ensure price is always correct and included
+      const price = this.state.price;
+  
+      if (isNaN(price) || price < 35) {
+        alert("Total Price must be at least $35.00");
+        return;
+      }
+  
+      // Add bookingNo, time, and price to formData
+      const submission = { ...formData, bookingNo, time, price };
       console.log("Registration submitted:", submission);
-
+  
       // --- Check for overlapping reserved seats before proceeding ---
       const { reservedSeats = [] } = this.state;
       const selectedSeats = Array.isArray(submission.seats)
         ? submission.seats
         : (typeof submission.seats === 'string' ? submission.seats.split(',').map(s => s.trim()) : []);
-
+  
       // Check for overlap
       const overlap = selectedSeats.filter(seat => reservedSeats.includes(seat));
       if (overlap.length > 0) {
@@ -306,18 +314,18 @@ class SeatReservationPanel extends Component {
         // Open the seating plan popup and show the current selection
         this.setState({
           isSeatingPlanOpen: true,
-          selectedSeats: selectedSeats // show what user tried to select
+          selectedSeats: selectedSeats
         });
         return;
       }
-
+  
       const insertResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "insert", records: [submission] });
       console.log("Insert response:", insertResponse.data);
-
+  
       if (insertResponse.data.success) {
         // Generate the PDF
         const pdfResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "generate", records: [submission] });
-
+  
         if (pdfResponse.data.receiptPdfBase64) {
           const base64 = pdfResponse.data.receiptPdfBase64;
           const byteCharacters = atob(base64);
@@ -327,13 +335,13 @@ class SeatReservationPanel extends Component {
           }
           const byteArray = new Uint8Array(byteNumbers);
           const blob = new Blob([byteArray], { type: 'application/pdf' });
-
+  
           // Create a blob URL
           const blobUrl = URL.createObjectURL(blob);
-
+  
           // 1. Open the PDF in a new tab for viewing
           window.open(blobUrl, '_blank');
-
+  
           // 2. Download the PDF with booking number as filename
           const link = document.createElement('a');
           link.href = blobUrl;
@@ -354,16 +362,16 @@ class SeatReservationPanel extends Component {
         } catch (notifyErr) {
           console.error("Failed to store notification:", notifyErr);
         }
-
+  
         this.setState(prevState => ({
           records: [...prevState.records, submission],
           selectedSeatsCount: 0,
           lastReservedCount: 0
         }));
-
+  
         // Refresh the page
         window.location.reload();
-
+  
         // Reset location and selectedSeatsCount in state
         this.setState({
           location: "",
@@ -373,31 +381,37 @@ class SeatReservationPanel extends Component {
     } catch (error) {
       console.error('❌ Error saving records:', error);
     }
-
   }
 
   // Handler for seat count change
   handleSelectedSeatsCountChange = (count) => {
-    console.log("Selected seats count changed:", count);
-    this.setState({ selectedSeatsCount: count });
+    const price = Number(count) * 35;
+    console.log("Selected seats count changed:", count, price);
+    this.setState({ selectedSeatsCount: count, price });
   };
 
   // Add this method to your SeatReservationPanel class
   handleSeatsSelected = (selectedSeats) => {
     // This will be called by SeatingPlan via the onSeatsSelected prop
-    // You can update state or perform any action with the selected seat numbers
+    // Update selectedSeats, selectedSeatsCount, and price
+    const selectedSeatsCount = selectedSeats.length;
     this.setState({
       selectedSeats,
-      selectedSeatsCount: selectedSeats.length // <-- keep count in sync
+      selectedSeatsCount,
+      price: selectedSeatsCount * 35 // <-- set price here
     });
-    // Optionally, you can log or trigger other logic here
     console.log("Seats selected from SeatingPlan:", selectedSeats);
   };
 
     // Handler to auto-select seats for the current location
   handleAutoSelectSeats = () => {
+    const count = Number(this.state.selectedSeatsCount);
     this.setState(
-      { cfmSelectedSeatsCount: Number(this.state.selectedSeatsCount), isSeatingPlanOpen: true },
+      { 
+        cfmSelectedSeatsCount: count,
+        isSeatingPlanOpen: true,
+        price: count * 35 // set total price here
+      },
       () => {
         // After opening the modal, trigger auto-select in SeatingPlan
         if (this.seatingPlanRef.current) {
@@ -542,6 +556,7 @@ class SeatReservationPanel extends Component {
                     : []
                 }
                 onStaffNameChange={this.handleStaffNameChange}
+                price={this.state.price} // <-- pass price here
               />
             </div>
           </div>

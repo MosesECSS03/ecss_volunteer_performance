@@ -76,6 +76,12 @@ class RegistrationForm extends Component {
         price: 0,
       });
     }
+
+    // Auto-populate price when selectedSeatsCount changes
+    if (prevProps.selectedSeatsCount !== this.props.selectedSeatsCount) {
+      const autoPrice = this.props.selectedSeatsCount * 35;
+      this.setState({ price: autoPrice });
+    }
   }
 
   handleChange = (e) => {
@@ -102,18 +108,20 @@ class RegistrationForm extends Component {
   handleSubmit = (e) => {
     console.log("Submitting form...");
     e.preventDefault();
-    let { name, paymentType, paymentRef, price } = this.state;
-    const { staffName, location, selectedSeatsCount, reservedSeats } = this.props;
+    let { name, paymentType, paymentRef } = this.state;
+    const { staffName, location, selectedSeatsCount, reservedSeats, price } = this.props;
     name = toTitleCase(name.trim());
     const staffNameTitle = toTitleCase((staffName || '').trim());
-
-    // Convert price to float and check minimum
-    const priceFloat = parseFloat(price);
+  
+    // Use price from props (parent), fallback to state if not present
+    const priceValue = price !== undefined ? price : this.state.price;
+    const priceFloat = parseFloat(priceValue);
+  
     if (isNaN(priceFloat) || priceFloat < 35.00) {
       this.setState({ showPriceError: true }); // <-- show popup
       return;
     }
-
+  
     if (!name || !staffNameTitle || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
     this.props.onSubmit({
       name,
@@ -134,7 +142,7 @@ class RegistrationForm extends Component {
       price: 0,
     });
   };
-
+  
   closePriceError = () => {
     this.setState({ showPriceError: false });
   };
@@ -145,7 +153,7 @@ class RegistrationForm extends Component {
     // Determine staff name logic
     let staffInputProps = {
       name: "staffName",
-      value: this.props.staffName,
+      value: staffName,
       required: true,
       onChange: this.handleChange,
       placeholder: "Enter staff name",
@@ -313,7 +321,7 @@ class RegistrationForm extends Component {
             <input
               type="text"
               name="price"
-              value={this.state.price || ''}
+              value={this.props.price || ''}
               onChange={e => this.setState({ price: e.target.value })}
               style={{
                 fontSize: '1.5rem',

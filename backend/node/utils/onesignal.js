@@ -21,8 +21,8 @@ async function sendOneSignalNotification({ title, message, url }) {
       ttl: 259200,
       android_sound: "default",
       ios_sound: "default",
-      chrome_web_icon: "./en.png", // Optional: your icon URL
-      chrome_web_image: "./en.png", // Optional: banner image
+      chrome_web_icon: "https://ecss.org.sg/wp-content/uploads/2023/03/cropped-EN_Logo_RGB_Normal_Small-01.png", // Optional: your icon URL
+      chrome_web_image: "https://ecss.org.sg/wp-content/uploads/2023/03/cropped-EN_Logo_RGB_Normal_Small-01.png", // Optional: banner image
       // Remove content_available/mutable_content to avoid silent notifications
     };
 

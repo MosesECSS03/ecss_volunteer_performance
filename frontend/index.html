@@ -16,7 +16,7 @@
         await OneSignal.init({
           appId: "62117916-bc7c-4424-a12a-f6e54aa06cc5",
           notifyButton: {
-            enable: true,  // Shows the bell icon
+            enable: true,
           },
           promptOptions: {
             slidedown: {
@@ -29,15 +29,39 @@
 
         if (window.OneSignal) {
           window.OneSignal.push(() => {
+            // Notification display event (already present)
             window.OneSignal.on('notificationDisplay', (event) => {
               console.log('OneSignal notification event:', event);
-              // Dispatch a custom event for React to listen to
               window.dispatchEvent(new CustomEvent('onesignal-notification', {
                 detail: {
                   type: 'info',
                   message: event.heading ? `${event.heading}: ${event.content}` : event.content || JSON.stringify(event)
                 }
               }));
+            });
+
+            // Notification click event: focus existing tab if open
+            window.OneSignal.on('notificationClick', function(event) {
+              const urlToOpen = event.notification.url || event.data?.url;
+              if (!urlToOpen) return;
+              // Try to focus an existing tab with the same URL
+              if (window.clients && window.clients.matchAll) {
+                window.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(windowClients) {
+                  for (let client of windowClients) {
+                    if (client.url === urlToOpen && 'focus' in client) {
+                      client.focus();
+                      return;
+                    }
+                  }
+                  // If not open, open a new tab
+                  if (window.clients.openWindow) {
+                    window.clients.openWindow(urlToOpen);
+                  }
+                });
+              } else {
+                // Fallback for browsers without clients API
+                window.open(urlToOpen, '_blank');
+              }
             });
           });
         }
