@@ -2,7 +2,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 
 // MongoDB connection string
 //const uri = 'mongodb+srv://MosesLee:Mlxy6695@performance-night-2025.xz1gndp.mongodb.net/?retryWrites=true&w=majority&appName=Performance-Night-2025'; // Use env variable
-const uri = 'mongodb+srv://moseslee:Mlxy6695@ecss-database.dstyrk4.mongodb.net/?retryWrites=true&w=majority&appName=ECSS-Database'; // Use env variable
+const uri = 'mongodb+srv://MosesLee:Mlxy%406695@company-management-syst.ulotbgi.mongodb.net/?retryWrites=true&w=majority&appName=Company-Management-System'; // Use env variable
 
 
 class DatabaseConnectivity {
