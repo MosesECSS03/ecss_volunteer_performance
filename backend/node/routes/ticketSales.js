@@ -234,15 +234,16 @@ router.post('/', async function(req, res, next)
         });
       }
     }
+    //generateWithApp
     else if(req.body.purpose === "generateWithApp") 
     {
       // Only generate PDF, do not insert
       const records = req.body.records;
-      //const grouped = {};
+      const grouped = {};
 
-      console.log("Received request for PDF generation:", req.body);
+      console.log("Received request for PDF generation:", req.body, records);
 
-      /*records.forEach(record => {
+      records.forEach(record => {
         const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
         if (!grouped[key]) {
           grouped[key] = {
@@ -259,15 +260,16 @@ router.post('/', async function(req, res, next)
           };
         }
         console.log("Processing record for grouping:", record);
+        /*console.log("Processing record for grouping:", record);
         if (Array.isArray(record.seats)) {
           record.seats.forEach(seatLabel => {
             grouped[key].seats.push(seatLabel);
             console.log("Seat added for grouping:", seatLabel);
           });
-        }
+        }*/
       });
 
-      const groupedRecords = Object.values(grouped).map(group => ({
+      /*const groupedRecords = Object.values(grouped).map(group => ({
         name: group.name,
         staffName: group.staffName,
         location: group.location,
@@ -278,7 +280,9 @@ router.post('/', async function(req, res, next)
         selectedSeatsCount: group.selectedSeatsCount,
         bookingNo: group.bookingNo,
         seats: seatsToRangesByRow(group.seats)
-      }));
+      }));*/
+
+      /*
 
       console.log("Grouped records for PDF generation:", groupedRecords);
 
