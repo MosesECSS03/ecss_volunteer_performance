@@ -182,7 +182,7 @@ router.post('/', async function(req, res, next)
       // Generate separate PDFs for each seat
       const pdfResults = await receiptGenerator.generate(groupedRecords);
       
-      if (pdfResults.length === 1) {
+      if (record.selectedSeatsCount.length === 1) {
         // Single PDF - return as before
         const pdfBase64 = pdfResults[0].buffer.toString('base64');
         return res.json({ success: true, receiptPdfBase64: pdfBase64 });
