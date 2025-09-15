@@ -261,10 +261,27 @@ router.post('/', async function(req, res, next)
         }
         console.log("Processing record for grouping:", record);
         console.log("Processing record(seats) for grouping:", record.seats);
-        if (Array.isArray(record.seats)) {
+      if (Array.isArray(record.seats)) {
           record.seats.forEach(seatLabel => {
-            grouped[key].seats.push(seatLabel);
-            console.log("Seat added for grouping:", seatLabel);
+            // Check if seatLabel is a range (contains '-')
+            if (seatLabel.includes('-')) {
+              // Parse the range and expand to individual seats
+              const [startSeat, endSeat] = seatLabel.split('-').map(s => s.trim());
+              const row = startSeat[0];
+              const startNum = parseInt(startSeat.slice(1), 10);
+              const endNum = parseInt(endSeat.slice(1), 10);
+              
+              // Generate individual seats from the range
+              for (let num = startNum; num <= endNum; num++) {
+                const individualSeat = `${row}${String(num).padStart(2, '0')}`;
+                grouped[key].seats.push(individualSeat);
+                console.log("Seat added for grouping (from range):", individualSeat);
+              }
+            } else {
+              // Handle individual seat label
+              grouped[key].seats.push(seatLabel);
+              console.log("Seat added for grouping:", seatLabel);
+            }
           });
         }
       });
@@ -284,7 +301,7 @@ router.post('/', async function(req, res, next)
 
     
 
-      console.log("Grouped records for PDF generation:", groupedRecords);
+      console.log(" ", groupedRecords);
 
 
       // Generate separate PDFs for each seat
