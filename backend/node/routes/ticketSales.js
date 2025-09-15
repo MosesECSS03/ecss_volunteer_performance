@@ -158,9 +158,11 @@ router.post('/', async function(req, res, next)
             seats: []
           };
         }
+        console.log("Processing record for grouping:", record);
         if (Array.isArray(record.seats)) {
           record.seats.forEach(seatLabel => {
             grouped[key].seats.push(seatLabel);
+            console.log("Seat added for grouping:", seatLabel);
           });
         }
       });
