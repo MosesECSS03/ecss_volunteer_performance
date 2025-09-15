@@ -260,13 +260,13 @@ router.post('/', async function(req, res, next)
           };
         }
         console.log("Processing record for grouping:", record);
-        /*console.log("Processing record for grouping:", record);
+        console.log("Processing record(seats) for grouping:", record.seats);
         if (Array.isArray(record.seats)) {
           record.seats.forEach(seatLabel => {
             grouped[key].seats.push(seatLabel);
             console.log("Seat added for grouping:", seatLabel);
           });
-        }*/
+        }
       });
 
       /*const groupedRecords = Object.values(grouped).map(group => ({
