@@ -178,9 +178,12 @@ router.post('/', async function(req, res, next)
         seats: seatsToRangesByRow(group.seats)
       }));
 
+      console.log("Grouped records for PDF generation:", groupedRecords);
+
 
       // Generate separate PDFs for each seat
       const pdfResults = await receiptGenerator.generate(groupedRecords);
+      console.log("PDF generation results:", pdfResults, pdfResults.length);
       
       if (pdfResults.length === 1) {
         // Single PDF - return as before
