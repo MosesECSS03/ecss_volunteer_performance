@@ -234,6 +234,106 @@ router.post('/', async function(req, res, next)
         });
       }
     }
+    else if(req.body.purpose === "generateWithApp") 
+    {
+      // Only generate PDF, do not insert
+      const records = req.body.records;
+      //const grouped = {};
+
+      console.log("Received request for PDF generation:", req.body);
+
+      /*records.forEach(record => {
+        const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
+        if (!grouped[key]) {
+          grouped[key] = {
+            name: record.name,
+            staffName: record.staffName,
+            location: record.location,
+            price: record.price,
+            time: record.time,
+            paymentType: record.paymentType,
+            paymentRef: record.paymentRef,
+            selectedSeatsCount: record.selectedSeatsCount,
+            bookingNo: record.bookingNo,
+            seats: []
+          };
+        }
+        console.log("Processing record for grouping:", record);
+        if (Array.isArray(record.seats)) {
+          record.seats.forEach(seatLabel => {
+            grouped[key].seats.push(seatLabel);
+            console.log("Seat added for grouping:", seatLabel);
+          });
+        }
+      });
+
+      const groupedRecords = Object.values(grouped).map(group => ({
+        name: group.name,
+        staffName: group.staffName,
+        location: group.location,
+        price: group.price,
+        time: group.time,
+        paymentType: group.paymentType,
+        paymentRef: group.paymentRef,
+        selectedSeatsCount: group.selectedSeatsCount,
+        bookingNo: group.bookingNo,
+        seats: seatsToRangesByRow(group.seats)
+      }));
+
+      console.log("Grouped records for PDF generation:", groupedRecords);
+
+
+      // Generate separate PDFs for each seat
+      const pdfResults = await receiptGenerator.generate(groupedRecords);
+      console.log("PDF generation results:", pdfResults, pdfResults.length);
+      
+      if (pdfResults.length === 1) {
+        // Single PDF - return as before
+        const pdfBase64 = pdfResults[0].buffer.toString('base64');
+        return res.json({ success: true, receiptPdfBase64: pdfBase64 });
+      } else {
+        // Multiple PDFs - create ZIP file
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        const zipBuffers = [];
+        
+        // Collect ZIP data
+        archive.on('data', (chunk) => zipBuffers.push(chunk));
+        
+        // Handle ZIP completion
+        const zipPromise = new Promise((resolve, reject) => {
+          archive.on('end', () => {
+            const zipBuffer = Buffer.concat(zipBuffers);
+            const zipBase64 = zipBuffer.toString('base64');
+            resolve(zipBase64);
+          });
+          archive.on('error', reject);
+        });
+        
+        // Add each PDF to the ZIP
+        pdfResults.forEach(result => {
+          archive.append(result.buffer, { name: result.filename });
+        });
+        
+        // Finalize the ZIP
+        archive.finalize();
+        
+        // Wait for ZIP to be created
+        const zipBase64 = await zipPromise;
+        const bookingNo = groupedRecords[0]?.bookingNo || 'tickets';
+        const paymentRef = groupedRecords[0]?.paymentRef || 'payment';
+        
+        // Sanitize filenames by replacing slashes with underscores
+        const sanitizedPaymentRef = paymentRef.replace(/\//g, '_');
+        const sanitizedBookingNo = bookingNo.replace(/\//g, '_');
+        
+        return res.json({ 
+          success: true, 
+          isZip: true,
+          zipBase64: zipBase64,
+          zipFilename: `${sanitizedPaymentRef}_${sanitizedBookingNo}_tickets.zip`
+        });
+      }*/
+    }
     else if(req.body.purpose === "retrieve") 
     {
       // Instantiate controller and retrieve records
