@@ -7,6 +7,12 @@ const LOCATIONS = [
   "Tampines North Community Club"
 ];
 
+const STAFF_BY_LOCATION = {
+  "CT Hub": ["Rosalind Ong", "Lam Lee Chin", "Yeo Lih Yong", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "Eileen Tan"],
+  "Tampines North Community Club": ["Allison Teo", "Eileen Tan", "He Xiuxiang"],
+  "Pasir Ris West Wellness Centre": ["Jeniffer Lim", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "He Xiuxiang"]
+};
+
 function formatSeatLabel(seat) {
   // If already in format 'A01', return as is
   if (/^[A-Z]\d{2}$/.test(seat)) return seat;
@@ -65,21 +71,27 @@ class RegistrationForm extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    // Reset form fields if seat count is reset to 0 after reservation
-    if (prevProps.selectedSeatsCount !== 0 && this.props.selectedSeatsCount === 0) {
+    const currentCount = Number(this.props.selectedSeatsCount);
+    const prevCount = Number(prevProps.selectedSeatsCount);
+    
+    // Only clear when transitioning from valid to invalid seat count
+    // But only clear price, not name and paymentRef (users should be able to type these anytime)
+    const shouldResetPrice = (
+      // Going from a valid count (> 0) to invalid (0 or empty)
+      prevCount > 0 && (currentCount <= 0 || !this.props.selectedSeatsCount || this.props.selectedSeatsCount === '')
+    );
+    
+    // Only reset price when transitioning from valid to invalid
+    if (shouldResetPrice) {
+      console.log("Resetting price due to seat count changing from valid to invalid");
       this.setState({
-        name: '',
-        staffName: '',
-        location: '',
-        paymentType: '',
-        paymentRef: '',
         price: 0,
       });
     }
 
-    // Auto-populate price when selectedSeatsCount changes
-    if (prevProps.selectedSeatsCount !== this.props.selectedSeatsCount) {
-      const autoPrice = this.props.selectedSeatsCount * 35;
+    // Auto-populate price when selectedSeatsCount changes (only for valid counts)
+    if (prevProps.selectedSeatsCount !== this.props.selectedSeatsCount && currentCount > 0) {
+      const autoPrice = currentCount * 35;
       this.setState({ price: autoPrice });
     }
   }
@@ -101,6 +113,15 @@ class RegistrationForm extends Component {
     this.setState({ paymentRef: e.target.value });
   };
 
+  // Method to manually clear form fields (only when explicitly called)
+  clearFormFields = () => {
+    this.setState({
+      name: '',
+      paymentRef: '',
+      price: 0,
+    });
+  };
+
   handleStaffDropdownChange = (e) => {
     this.setState({ staffName: e.target.value });
   };
@@ -117,7 +138,8 @@ class RegistrationForm extends Component {
     const priceValue = price !== undefined ? price : this.state.price;
     const priceFloat = parseFloat(priceValue);
   
-    if (isNaN(priceFloat) || priceFloat < 35.00) {
+    // Allow price of 0 (free booking) but require minimum $35 for paid bookings
+    if (isNaN(priceFloat) || (priceFloat > 0 && priceFloat < 35.00)) {
       this.setState({ showPriceError: true }); // <-- show popup
       return;
     }
@@ -169,11 +191,13 @@ class RegistrationForm extends Component {
     let dropdownOptions = [];
 
     if (location === "CT Hub") {
-      staffInputProps.value = STAFF_BY_LOCATION["CT Hub"];
       staffInputProps.readOnly = true;
+      showDropdown = true;
+      dropdownOptions = STAFF_BY_LOCATION["CT Hub"];
     } else if (location === "Tampines North Community Club") {
-      staffInputProps.value = STAFF_BY_LOCATION["Tampines North Community Club"];
       staffInputProps.readOnly = true;
+      showDropdown = true;
+      dropdownOptions = STAFF_BY_LOCATION["Tampines North Community Club"];
     } else if (location === "Pasir Ris West Wellness Centre") {
       staffInputProps.readOnly = true;
       showDropdown = true;
@@ -192,12 +216,32 @@ class RegistrationForm extends Component {
             required
             onChange={this.handleChange}
             placeholder="Enter name"
-            style={{ fontSize: '1.5rem' }}
+            style={{ 
+              fontSize: '1.5rem',
+              backgroundColor: name ? '#333' : '#2a2a2a', // Darker when empty
+              border: `2px solid ${name ? '#4efa85' : '#555'}`, // Green border when filled
+              borderRadius: '4px',
+              padding: '10px 12px',
+              color: 'white',
+              transition: 'all 0.3s ease',
+              width: '100%'
+            }}
           />
         </label>
         <label style={{ fontSize: '1.5rem' }}>
           Staff Name
-          <input style={{ fontSize: '1.5rem' }} {...staffInputProps} />
+          <input 
+            style={{ 
+              fontSize: '1.5rem',
+              backgroundColor: '#333',
+              border: '1px solid #555',
+              borderRadius: '4px',
+              padding: '10px 12px',
+              color: 'white',
+              width: '100%'
+            }} 
+            {...staffInputProps} 
+          />
         </label>
         {
           this.props.staffDropdownOptions.length > 0 && (
@@ -205,7 +249,16 @@ class RegistrationForm extends Component {
               <select
                 value={this.props.staffName}
                 onChange={e => this.props.onStaffNameChange(e.target.value)}
-                style={{ fontSize: '1.2rem', width: '100%', marginTop: 8 }}
+                style={{ 
+                  fontSize: '1.5rem', 
+                  width: '100%', 
+                  marginTop: 8,
+                  backgroundColor: '#333',
+                  border: '1px solid #555',
+                  borderRadius: '4px',
+                  padding: '10px 12px',
+                  color: 'white'
+                }}
                 required
               >
                 <option value="">-- Select Staff --</option>
@@ -268,12 +321,22 @@ class RegistrationForm extends Component {
             required
             onChange={this.handlePaymentRefChange}
             placeholder="Enter mobile number"
-            style={{ fontSize: '1.5rem' }}
+            style={{ 
+              fontSize: '1.5rem',
+              backgroundColor: '#333',
+              border: '1px solid #555',
+              borderRadius: '4px',
+              padding: '10px 12px',
+              color: 'white',
+              width: '100%'
+            }}
           />
         </label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ fontSize: '1.5rem', flex: 1 }}>
-            Selected Seats Count
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: '1.5rem', display: 'block', marginBottom: '8px', textAlign: 'center' }}>
+              Selected Seats Count
+            </label>
             <input
               type="text"
               name="selectedSeatsCount"
@@ -286,31 +349,33 @@ class RegistrationForm extends Component {
                 borderRadius: '4px',
                 padding: '10px 12px',
                 color: 'white',
-                marginTop: '8px',
-                width: '100%'
+                width: '98%'
               }}
               required
             />
-          </label>
+          </div>
           <button
             type="button"
             style={{
               fontSize: '1.2rem',
               padding: '10px 16px',
-              marginTop: '32px',
               background: '#4efa85',
               color: '#222',
               border: 'none',
               borderRadius: '4px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              opacity: 1,
+              height: '44px', // Match input total height (24px + 20px padding)
+              flexShrink: 0,
+              minWidth: '120px'
             }}
             onClick={this.props.onAutoSelectSeats}
             title="Auto-select next available seats"
           >
-            Get Next Seats
+            Get Seat(s)
           </button>
         </div>
-        {reservedSeats && reservedSeats.length > 0 && (
+        {reservedSeats && reservedSeats.length > 0 && Number(this.props.selectedSeatsCount) > 0 && (
           <div style={{ margin: '12px 0', fontSize: '1.3rem', color: '#0078d4' }}>
             <strong>Selected Seats:</strong> {formatSeatRanges(reservedSeats)}
           </div>

@@ -68,10 +68,17 @@ class SeatingPlan extends Component {
   constructor(props) {
     super(props);
     const { location, noOfReservedSeats } = props;
-    const allowedRows = LOCATION_ROWS[location] || [];
-    const autoSelectedSeats = this.autoSelectSeatsFromRows(allowedRows, Number(noOfReservedSeats));
+    
+    // Only auto-select seats if a valid count is provided
+    let initialSelected = [];
+    const count = Number(noOfReservedSeats);
+    if (noOfReservedSeats && count > 0 && !isNaN(count)) {
+      const allowedRows = LOCATION_ROWS[location] || [];
+      initialSelected = this.autoSelectSeatsFromRows(allowedRows, count);
+    }
+    
     this.state = {
-      selected: autoSelectedSeats,
+      selected: initialSelected,
     };
   }
 
@@ -85,6 +92,7 @@ class SeatingPlan extends Component {
           (col >= 7 && col <= 19) ||
           (col >= 21 && col <= 26)
         ) {
+          // Exclude VIP seats from auto-selection, only include regular seats
           if (!isVipSeat(row, col)) {
             const rowLetter = rowNumberToLetter(row);
             const seatNumber = (
@@ -121,9 +129,14 @@ class SeatingPlan extends Component {
       prevProps.noOfReservedSeats !== this.props.noOfReservedSeats ||
       prevProps.location !== this.props.location
     ) {
-      const allowedRows = LOCATION_ROWS[this.props.location] || [];
-      const autoSelectedSeats = this.autoSelectSeatsFromRows(allowedRows, Number(this.props.noOfReservedSeats));
-      this.setState({ selected: autoSelectedSeats });
+      // Only auto-select seats if a valid count is provided
+      let newSelected = [];
+      const count = Number(this.props.noOfReservedSeats);
+      if (this.props.noOfReservedSeats && count > 0 && !isNaN(count)) {
+        const allowedRows = LOCATION_ROWS[this.props.location] || [];
+        newSelected = this.autoSelectSeatsFromRows(allowedRows, count);
+      }
+      this.setState({ selected: newSelected });
     }
   }
 
@@ -179,6 +192,7 @@ class SeatingPlan extends Component {
           (col >= 21 && col <= 26)
         ) {
           const seatLabel = `${rowLetter}${seatNumber.toString().padStart(2, '0')}`;
+          // Exclude VIP seats from auto-selection - VIP seats are manual only
           if (!isVipSeat(rowIdx, col)) {
             if (!reservedSeats.includes(seatLabel)) {
               selectedSeats.push(seatLabel);
@@ -186,8 +200,6 @@ class SeatingPlan extends Component {
                 return selectedSeats;
               }
             }
-          } else {
-            console.log(`Skipping VIP seat: ${seatLabel}`);
           }
           seatNumber++; // Always increment for every seat, VIP or not!
         }
@@ -199,8 +211,30 @@ class SeatingPlan extends Component {
   handleAutoSelectSeats = () => {
     const { location, noOfReservedSeats } = this.props;
     const allowedRows = LOCATION_ROWS[location] || [];
-    const selectedSeats = this.autoSelectSeatsFromRows(allowedRows, Number(noOfReservedSeats));
+    
+    // Ensure we have a valid count
+    let count = Number(noOfReservedSeats);
+    if (!noOfReservedSeats || count <= 0 || isNaN(count)) {
+      console.log("No auto-selection requested, opening seating plan for manual selection");
+      // Clear any existing selections and let user select manually
+      this.setState({ selected: [] });
+      return;
+    }
+    
+    const selectedSeats = this.autoSelectSeatsFromRows(allowedRows, count);
     console.log("Auto-selected seats:", selectedSeats);
+    
+    if (selectedSeats.length === 0) {
+      console.log(`No available seats found for auto-selection in location: ${location}`);
+      // Still allow manual selection
+      this.setState({ selected: [] });
+      return;
+    }
+    
+    if (selectedSeats.length < count) {
+      console.log(`Only ${selectedSeats.length} seats available for auto-selection (requested ${count})`);
+    }
+    
     this.setState({ selected: selectedSeats });
     if (this.props.onSeatSelect) {
       this.props.onSeatSelect(selectedSeats);
@@ -432,8 +466,12 @@ class SeatingPlan extends Component {
                               const button = isVIP ? (
                                 <button
                                   key={seatLabel}
-                                  className="seat vip"
-                                  disabled
+                                  className={`seat vip ${isSelected ? 'selected' : ''} ${isReserved ? 'reserved' : ''}`}
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    if (!isReserved) this.handleSeatClick(seatLabel);
+                                  }}
+                                  disabled={isReserved}
                                 >
                                   <CinemaChairSVG1 fillColor={seatColor} seatNumber={seatLabel} />
                                   <span className="vip-badge">VIP</span>

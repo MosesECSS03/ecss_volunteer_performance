@@ -13,11 +13,10 @@ const API_BASE_URL =
     : "https://ecss-performance-night-2025.azurewebsites.net";
 
 const STAFF_BY_LOCATION = {
-  "CT Hub": "Yeo Lih Yong",
-  "Tampines North Community Club": "Allison Teo",
-  "Pasir Ris West Wellness Centre": ["Jeniffer Lim", "Daryl Neo"]
+  "CT Hub": ["Rosalind Ong", "Lam Lee Chin", "Yeo Lih Yong", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "Eileen Tan"],
+  "Tampines North Community Club": ["Allison Teo", "Eileen Tan", "He Xiuxiang"],
+  "Pasir Ris West Wellness Centre": ["Jeniffer Lim", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "He Xiuxiang"]
 };
-
 
 // Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
 function expandSeatRanges(seatRanges) {
@@ -324,7 +323,8 @@ class SeatReservationPanel extends Component {
       // Ensure price is always correct and included
       const price = this.state.price;
   
-      if (isNaN(price) || price < 35) {
+      // Allow price of 0 (free booking) but require minimum $35 for paid bookings
+      if (isNaN(price) || (price > 0 && price < 35)) {
         alert("Total Price must be at least $35.00");
         return;
       }
@@ -355,10 +355,59 @@ class SeatReservationPanel extends Component {
       console.log("Insert response:", insertResponse.data);
   
       if (insertResponse.data.success) {
-        // Generate the PDF
+        // Generate the PDF(s)
         const pdfResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "generate", records: [submission] });
   
-        if (pdfResponse.data.receiptPdfBase64) {
+        if (pdfResponse.data.isZip && pdfResponse.data.zipBase64) {
+          // Handle ZIP file containing multiple PDFs
+          const base64 = pdfResponse.data.zipBase64;
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/zip' });
+  
+          // Create a blob URL and download the ZIP file
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = pdfResponse.data.zipFilename || 'tickets.zip';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+        } else if (pdfResponse.data.multiplePdfs && pdfResponse.data.pdfFiles) {
+          // Handle multiple PDFs - one for each seat (fallback)
+          pdfResponse.data.pdfFiles.forEach((pdfFile, index) => {
+            const base64 = pdfFile.pdfBase64;
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+    
+            // Create a blob URL
+            const blobUrl = URL.createObjectURL(blob);
+    
+            // 1. Open the first PDF in a new tab for viewing
+            if (index === 0) {
+              window.open(blobUrl, '_blank');
+            }
+    
+            // 2. Download each PDF with seat-specific filename
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = pdfFile.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
+        } else if (pdfResponse.data.receiptPdfBase64) {
+          // Handle single PDF (backwards compatibility)
           const base64 = pdfResponse.data.receiptPdfBase64;
           const byteCharacters = atob(base64);
           const byteNumbers = new Array(byteCharacters.length);
@@ -417,9 +466,24 @@ class SeatReservationPanel extends Component {
 
   // Handler for seat count change
   handleSelectedSeatsCountChange = (count) => {
-    const price = Number(count) * 35;
+    const numCount = Number(count);
+    const price = numCount * 35;
     console.log("Selected seats count changed:", count, price);
-    this.setState({ selectedSeatsCount: count, price });
+    
+    // If count is 0 or empty, clear selected seats as well
+    if (!count || count === '' || numCount <= 0) {
+      this.setState({ 
+        selectedSeatsCount: count, 
+        price: 0,
+        selectedSeats: [] // Clear selected seats when count is 0/empty
+      });
+      
+      // Trigger form field clearing in RegistrationForm by forcing a re-render
+      // This ensures name and paymentRef are cleared immediately
+      this.forceUpdate();
+    } else {
+      this.setState({ selectedSeatsCount: count, price });
+    }
   };
 
   // Add this method to your SeatReservationPanel class
@@ -427,17 +491,35 @@ class SeatReservationPanel extends Component {
     // This will be called by SeatingPlan via the onSeatsSelected prop
     // Update selectedSeats, selectedSeatsCount, and price
     const selectedSeatsCount = selectedSeats.length;
-    this.setState({
-      selectedSeats,
-      selectedSeatsCount,
-      price: selectedSeatsCount * 35 // <-- set price here
-    });
+    
+    if (selectedSeatsCount > 0) {
+      // User is selecting seats - update everything
+      this.setState({
+        selectedSeats,
+        selectedSeatsCount,
+        price: selectedSeatsCount * 35
+      });
+    } else {
+      // User is clearing selection - clear everything including the seat count field
+      this.setState({
+        selectedSeats,
+        selectedSeatsCount: '', // Clear the seat count field to make form blank
+        price: 0
+      });
+    }
     console.log("Seats selected from SeatingPlan:", selectedSeats);
   };
 
     // Handler to auto-select seats for the current location
   handleAutoSelectSeats = () => {
-    const count = Number(this.state.selectedSeatsCount);
+    const rawCount = this.state.selectedSeatsCount;
+    let count = Number(rawCount);
+    
+    // Handle empty, null, undefined, or 0 values - default to 0 for manual selection
+    if (!rawCount || rawCount === '' || count <= 0 || isNaN(count)) {
+      count = 0; // No auto-selection, user will select manually
+    }
+    
     this.setState(
       { 
         cfmSelectedSeatsCount: count,
@@ -445,8 +527,8 @@ class SeatReservationPanel extends Component {
         price: count * 35 // set total price here
       },
       () => {
-        // After opening the modal, trigger auto-select in SeatingPlan
-        if (this.seatingPlanRef.current) {
+        // After opening the modal, trigger auto-select in SeatingPlan only if count > 0
+        if (this.seatingPlanRef.current && count > 0) {
           this.seatingPlanRef.current.handleAutoSelectSeats();
         }
       }
@@ -455,14 +537,8 @@ class SeatReservationPanel extends Component {
   
   handleLocationChange = (e) => {
     const location = e.target.value;
-    let staffName = '';
-    if (location === "CT Hub") {
-      staffName = STAFF_BY_LOCATION["CT Hub"];
-    } else if (location === "Tampines North Community Club") {
-      staffName = STAFF_BY_LOCATION["Tampines North Community Club"];
-    }
-    // For Pasir Ris West Wellness Centre, staffName remains empty until selected from dropdown
-    this.setState({ location, staffName });
+    // Clear staffName when location changes - user should select from dropdown
+    this.setState({ location, staffName: '' });
   };
 
   handleStaffNameChange = (staffName) => {
@@ -588,7 +664,11 @@ class SeatReservationPanel extends Component {
                 staffName={this.state.staffName}
                 staffDropdownOptions={
                   this.state.location === "Pasir Ris West Wellness Centre"
-                    ? ["Jeniffer Lim", "Daryl Neo"]
+                    ? STAFF_BY_LOCATION["Pasir Ris West Wellness Centre"]
+                    : this.state.location === "CT Hub"
+                    ? STAFF_BY_LOCATION["CT Hub"]
+                    : this.state.location === "Tampines North Community Club"
+                    ? STAFF_BY_LOCATION["Tampines North Community Club"]
                     : []
                 }
                 onStaffNameChange={this.handleStaffNameChange}

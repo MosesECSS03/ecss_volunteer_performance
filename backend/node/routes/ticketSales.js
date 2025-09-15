@@ -1,8 +1,9 @@
 var express = require('express');
 var router = express.Router();
 var TicketSalesController = require('../Controller/TicketSales/TicketSalesController'); 
-var receiptGenerator = require("../Others/Pdf/receiptGenerated"); // Import the receipt generator utility
+var receiptGenerator = require("../Others/Pdf/receiptGenerated.js"); // Import the receipt generator utility
 const { sendOneSignalNotification } = require('../utils/onesignal');
+const archiver = require('archiver'); // Import archiver for ZIP creation
 
 function seatsToRangesByRow(seats) {
   if (!Array.isArray(seats) || seats.length === 0) return [];
@@ -178,13 +179,55 @@ router.post('/', async function(req, res, next)
       }));
 
 
-      // Generate PDF only (not insert)
-      const pdfBuffer = await receiptGenerator.generate(groupedRecords);
-      const pdfBase64 = pdfBuffer.toString('base64');
-
-     // if (io) io.emit('reservation-updated');
-
-      return res.json({ success: true, receiptPdfBase64: pdfBase64 });
+      // Generate separate PDFs for each seat
+      const pdfResults = await receiptGenerator.generate(groupedRecords);
+      
+      if (pdfResults.length === 1) {
+        // Single PDF - return as before
+        const pdfBase64 = pdfResults[0].buffer.toString('base64');
+        return res.json({ success: true, receiptPdfBase64: pdfBase64 });
+      } else {
+        // Multiple PDFs - create ZIP file
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        const zipBuffers = [];
+        
+        // Collect ZIP data
+        archive.on('data', (chunk) => zipBuffers.push(chunk));
+        
+        // Handle ZIP completion
+        const zipPromise = new Promise((resolve, reject) => {
+          archive.on('end', () => {
+            const zipBuffer = Buffer.concat(zipBuffers);
+            const zipBase64 = zipBuffer.toString('base64');
+            resolve(zipBase64);
+          });
+          archive.on('error', reject);
+        });
+        
+        // Add each PDF to the ZIP
+        pdfResults.forEach(result => {
+          archive.append(result.buffer, { name: result.filename });
+        });
+        
+        // Finalize the ZIP
+        archive.finalize();
+        
+        // Wait for ZIP to be created
+        const zipBase64 = await zipPromise;
+        const bookingNo = groupedRecords[0]?.bookingNo || 'tickets';
+        const paymentRef = groupedRecords[0]?.paymentRef || 'payment';
+        
+        // Sanitize filenames by replacing slashes with underscores
+        const sanitizedPaymentRef = paymentRef.replace(/\//g, '_');
+        const sanitizedBookingNo = bookingNo.replace(/\//g, '_');
+        
+        return res.json({ 
+          success: true, 
+          isZip: true,
+          zipBase64: zipBase64,
+          zipFilename: `${sanitizedPaymentRef}_${sanitizedBookingNo}_tickets.zip`
+        });
+      }
     }
     else if(req.body.purpose === "retrieve") 
     {

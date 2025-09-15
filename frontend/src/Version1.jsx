@@ -68,10 +68,59 @@ class Version1 extends Component {
       const insertResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "insert", records: [seatRecord] });
 
       if (insertResponse.data.success) {
-        // 2. Generate the PDF (assume you have a separate endpoint for this)
+        // 2. Generate the PDF(s) (assume you have a separate endpoint for this)
         const pdfResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "generate", records: [seatRecord] });
 
-        if (pdfResponse.data.receiptPdfBase64) {
+        if (pdfResponse.data.isZip && pdfResponse.data.zipBase64) {
+          // Handle ZIP file containing multiple PDFs
+          const base64 = pdfResponse.data.zipBase64;
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/zip' });
+
+          // Create a blob URL and download the ZIP file
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = pdfResponse.data.zipFilename || 'tickets.zip';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+        } else if (pdfResponse.data.multiplePdfs && pdfResponse.data.pdfFiles) {
+          // Handle multiple PDFs - one for each seat (fallback)
+          pdfResponse.data.pdfFiles.forEach((pdfFile, index) => {
+            const base64 = pdfFile.pdfBase64;
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+            // Create a blob URL
+            const blobUrl = URL.createObjectURL(blob);
+
+            // 1. Open the first PDF in a new tab for viewing
+            if (index === 0) {
+              window.open(blobUrl, '_blank');
+            }
+
+            // 2. Download each PDF with seat-specific filename
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = pdfFile.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
+        } else if (pdfResponse.data.receiptPdfBase64) {
+          // Handle single PDF (backwards compatibility)
           const base64 = pdfResponse.data.receiptPdfBase64;
           const byteCharacters = atob(base64);
           const byteNumbers = new Array(byteCharacters.length);

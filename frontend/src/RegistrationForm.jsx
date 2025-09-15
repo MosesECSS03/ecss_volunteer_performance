@@ -72,13 +72,30 @@ class RegistrationForm extends Component {
 
   handleSubmit = (e) => {
     e.preventDefault();
+    console.log("Submit button clicked!");
+    
     let { name, staffName, location, paymentType, paymentRef } = this.state;
     const { selectedSeatsCount, reservedSeats } = this.props;
+    
     name = toTitleCase(name.trim());
     staffName = toTitleCase(staffName.trim());
     const price = (selectedSeatsCount || 0) * 35;
-    if (!name || !staffName || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) return;
-    this.props.onSubmit({
+    
+    // Check if all required fields are filled
+    if (!name || !staffName || !location || !paymentType || !paymentRef || selectedSeatsCount === 0) {
+      console.log("Missing required fields:", {
+        name: !name,
+        staffName: !staffName, 
+        location: !location,
+        paymentType: !paymentType,
+        paymentRef: !paymentRef,
+        selectedSeatsCount: selectedSeatsCount === 0
+      });
+      alert("Please fill in all required fields and select at least one seat.");
+      return;
+    }
+    
+    const formData = {
       name,
       staffName,
       location,
@@ -87,7 +104,18 @@ class RegistrationForm extends Component {
       price,
       selectedSeatsCount,
       seats: (reservedSeats || []).map(formatSeatLabel),
-    });
+    };
+    
+    console.log("Form data to submit:", formData);
+    
+    // Check if onSubmit prop exists
+    if (this.props.onSubmit && typeof this.props.onSubmit === 'function') {
+      this.props.onSubmit(formData);
+    } else {
+      console.error("onSubmit prop is missing or not a function");
+      alert("Form submission handler is not properly configured.");
+    }
+    
     // Reset form fields to default values
     this.setState({
       name: '',
@@ -186,7 +214,7 @@ class RegistrationForm extends Component {
         </label>
         <div>
           <label style={{ fontSize: '1.5rem' }}>
-            Selected Seats Count&nbsp;
+            Selected Seats Count
             <span style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{selectedSeatsCount}</span>
           </label>
         </div>
