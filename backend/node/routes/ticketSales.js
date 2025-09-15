@@ -269,7 +269,7 @@ router.post('/', async function(req, res, next)
         }
       });
 
-      /*const groupedRecords = Object.values(grouped).map(group => ({
+      const groupedRecords = Object.values(grouped).map(group => ({
         name: group.name,
         staffName: group.staffName,
         location: group.location,
@@ -280,9 +280,9 @@ router.post('/', async function(req, res, next)
         selectedSeatsCount: group.selectedSeatsCount,
         bookingNo: group.bookingNo,
         seats: seatsToRangesByRow(group.seats)
-      }));*/
+      }));
 
-      /*
+    
 
       console.log("Grouped records for PDF generation:", groupedRecords);
 
@@ -336,7 +336,7 @@ router.post('/', async function(req, res, next)
           zipBase64: zipBase64,
           zipFilename: `${sanitizedPaymentRef}_${sanitizedBookingNo}_tickets.zip`
         });
-      }*/
+      }
     }
     else if(req.body.purpose === "retrieve") 
     {
