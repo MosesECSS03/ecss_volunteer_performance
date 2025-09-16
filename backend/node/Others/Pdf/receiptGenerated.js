@@ -141,22 +141,18 @@ class ReceiptGenerator
        .text(seatNumber, 260, 350);
       
       doc.fontSize(15).font('Arial').fillColor('black')
-       .text(`Booking Reference:`, 100, 375);
+       .text(`Booking Reference:`, 100, 380);
       doc.fontSize(15).font('Arial Bold').fillColor('black')
-       .text(`${record.paymentRef}`, 235, 375);
+       .text(`${record.paymentRef}`, 235, 380);
       
       doc.fontSize(15).font('Arial').fillColor('black')
-       .text(`Ticket Price:`, 100, 425);
-      // Replace this line:
-      doc.fontSize(15).font('Arial Bold').fillColor('black')
-        .text(`$${record.price || '0'}`, 185, 425);
-
+       .text(`Ticket Price:`, 100, 400);
       // With this conditional logic:
       doc.fontSize(15).font('Arial Bold').fillColor('black');
-      if (record.price && parseFloat(record.price) > 0) {
-        doc.text(`$${record.price}`, 185, 425);
+      if (record.price != "0") {
+        doc.text(`$35`, 185, 400);
       } else {
-        doc.text(`Complimentary`, 185, 425);
+        doc.text(`Complimentary`, 185, 400);
       }
       
       // Generate QR code for this specific seat number
@@ -174,7 +170,7 @@ class ReceiptGenerator
         const qrBuffer = Buffer.from(qrCodeData.split(',')[1], 'base64');
         const qrSize = 200;
         const centerX = (doc.page.width - qrSize) / 2;
-        doc.image(qrBuffer, centerX, 400, { width: qrSize, height: qrSize });
+        doc.image(qrBuffer, centerX, 425, { width: qrSize, height: qrSize });
       } catch (qrError) {
         console.log('QR code generation failed:', qrError);
       }
