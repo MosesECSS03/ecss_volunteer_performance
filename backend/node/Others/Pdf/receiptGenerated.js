@@ -145,10 +145,19 @@ class ReceiptGenerator
       doc.fontSize(15).font('Arial Bold').fillColor('black')
        .text(`${record.paymentRef}`, 235, 375);
       
-      /*doc.fontSize(15).font('Arial').fillColor('black')
+      doc.fontSize(15).font('Arial').fillColor('black')
        .text(`Ticket Price:`, 100, 425);
+      // Replace this line:
       doc.fontSize(15).font('Arial Bold').fillColor('black')
-       .text(`$${record.price || '0'}`, 185, 425);*/
+        .text(`$${record.price || '0'}`, 185, 425);
+
+      // With this conditional logic:
+      doc.fontSize(15).font('Arial Bold').fillColor('black');
+      if (record.price && parseFloat(record.price) > 0) {
+        doc.text(`$${record.price}`, 185, 425);
+      } else {
+        doc.text(`Complimentary`, 185, 425);
+      }
       
       // Generate QR code for this specific seat number
       try {
