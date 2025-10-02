@@ -99,6 +99,7 @@ class ReceiptGenerator
     });
   }
 
+  //ok
   async generatePageForSeat(doc, record, seatNumber) {
     // Date Issued and Booking No (top right, aligned from end)
     const now = new Date();
