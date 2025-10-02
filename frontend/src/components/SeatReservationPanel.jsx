@@ -12,12 +12,6 @@ const API_BASE_URL =
     ? "http://localhost:3001"
     : "https://ecss-performance-night-2025.azurewebsites.net";
 
-const STAFF_BY_LOCATION = {
-  "CT Hub": ["Rosalind Ong", "Lam Lee Chin", "Yeo Lih Yong", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "Eileen Tan"],
-  "Tampines North Community Club": ["Allison Teo", "Eileen Tan", "He Xiuxiang"],
-  "Pasir Ris West Wellness Centre": ["Jeniffer Lim", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "He Xiuxiang"]
-};
-
 // Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
 function expandSeatRanges(seatRanges) {
   const result = [];
@@ -82,11 +76,11 @@ class SeatReservationPanel extends Component {
       selectedSeatsCount: "", // <-- Add this line
       cfmSelectedSeatsCount: 0, // <-- Add this line
       locationFilter: 'all',
-      location: '', // add this
+      staffName: '', // simplified staff name
       notes: [
-        { id: 1, type: 'info', message: 'Seat can be auto or manual selected' },
-        { id: 2, type: 'info', message: 'Press the button to view the seating plan popup' },
-        { id: 3, type: 'info', message: 'Click on the "Get Next Seats" to auto-select next available seats' },
+        { id: 1, type: 'info', message: 'Click "Get Seat(s)" to open seating plan and manually select seats' },
+        { id: 2, type: 'info', message: 'Press the "🎭View Seating Plan" button to view the seating plan popup' },
+        { id: 3, type: 'info', message: 'Choose any available seats by clicking on them in the seating plan' },
         { id: 4, type: 'info', message: 'Submit the form to book the seat(s)' },
         { id: 5, type: 'warning', message: 'Submit the form to book the seat(s)' },
         { id: 6, type: 'warning', message: 'Each booking transaction must be at $35.' },
@@ -95,6 +89,7 @@ class SeatReservationPanel extends Component {
         { id: 9, type: 'general', message: 'All data and information are updated real time and live' },
       ],
       isSeatingPlanOpen: false, // New state to track popup visibility
+      isViewOnly: false, // Track if seating plan is in view-only mode
       availabilityData: {
         totalSeats: 0,
         available: 0,
@@ -235,18 +230,10 @@ class SeatReservationPanel extends Component {
   // Helper method to determine location from seat ID (if needed)
   determineLocationFromSeat = (seatId) => {
     // Example logic - should be adapted to your actual seat ID format
-    const row = seatId.charAt(0);
-    
-    if (['C', 'D', 'I', 'J', 'M'].includes(row)) {
-      return 'CT Hub';
-    } else if (['E', 'F', 'K', 'L'].includes(row)) {
-      return 'Tampines North Community Club';
-    } else if (['G', 'H'].includes(row)) {
-      return 'Pasir Ris West Wellness Centre';
-    }
-    
-    // Default if can't determine
-    return 'CT Hub';
+    getLocationFromSeat = (seatId) => {
+    // Since location is removed, return a default value
+    return 'ECSS Performance Night';
+  };
   };
 
   handleSeatSelect = (seatId) => {
@@ -288,16 +275,21 @@ class SeatReservationPanel extends Component {
     this.setState({ selectedSeats: [] });
   }
 
-  // New method to toggle the seating plan popup
-  toggleSeatingPlan = (selectedSeats = null) => {
-    // If selectedSeats is provided, update state
-    console.log("Selected seats:", selectedSeats);
-    if (selectedSeats) {
-      this.handleSeatsSelected(selectedSeats);
-    }
+  // Method to toggle the seating plan popup in VIEW-ONLY mode (🎭View Seating Plan button)
+  toggleSeatingPlan = () => {
     this.setState(prevState => ({
-      isSeatingPlanOpen: !prevState.isSeatingPlanOpen
+      isSeatingPlanOpen: !prevState.isSeatingPlanOpen,
+      isViewOnly: true // Always view-only for this button
     }));
+  }
+
+  // Method to open seating plan in INTERACTIVE mode (for Get Seat(s) button)
+  openSeatingPlan = () => {
+    // Open in interactive mode for seat selection
+    this.setState({ 
+      isSeatingPlanOpen: true,
+      isViewOnly: false // Interactive mode for seat selection
+    });
   }
 
   // New method to toggle the registration form
@@ -535,12 +527,6 @@ class SeatReservationPanel extends Component {
     );
   };
   
-  handleLocationChange = (e) => {
-    const location = e.target.value;
-    // Clear staffName when location changes - user should select from dropdown
-    this.setState({ location, staffName: '' });
-  };
-
   handleStaffNameChange = (staffName) => {
     this.setState({ staffName });
   };
@@ -588,6 +574,7 @@ class SeatReservationPanel extends Component {
       notifications, 
       isSeatingPlanOpen, 
       isRegistrationOpen,
+      isViewOnly,
       availabilityData,
       isLoading,
       error,
@@ -616,11 +603,7 @@ class SeatReservationPanel extends Component {
                     <button 
                       className="close-modal-btn"
                       onClick={() => {
-                        // Get selected seats from SeatingPlan via ref
-                        const selectedSeats = this.seatingPlanRef.current
-                          ? this.seatingPlanRef.current.getSelectedSeats()
-                          : [];
-                        this.toggleSeatingPlan(selectedSeats);
+                        this.setState({ isSeatingPlanOpen: false });
                       }}
                     >
                       &times;
@@ -632,10 +615,10 @@ class SeatReservationPanel extends Component {
                       availableSeats={this.state.availableSeats}
                       reservedSeats={this.state.reservedSeats} // <-- pass here
                       noOfReservedSeats={this.state.selectedSeatsCount}
-                      onSeatSelect={this.handleSeatSelect}
-                      onClearSelection={this.handleClearSelection}
-                      location={this.state.location}
+                      onSeatsSelected={isViewOnly ? null : this.handleSeatsSelected} // Enable/disable based on mode
+                      onClearSelection={isViewOnly ? null : this.handleClearSelection} // Enable/disable based on mode
                       selectedSeats={this.state.selectedSeats}
+                      viewOnly={isViewOnly} // Use dynamic view-only prop
                     />
                   </div>
                 </div>
@@ -648,182 +631,14 @@ class SeatReservationPanel extends Component {
                 selectedSeatsCount={this.state.selectedSeatsCount}
                 reservedSeats={this.state.selectedSeats}
                 onSubmit={this.handleRegistrationSubmit}
-                onAutoSelectSeats={this.handleAutoSelectSeats}
+                onAutoSelectSeats={this.openSeatingPlan}
                 onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
-                location={this.state.location}
-                onLocationChange={this.handleLocationChange}
                 staffName={this.state.staffName}
-                staffDropdownOptions={
-                  this.state.location === "Pasir Ris West Wellness Centre"
-                    ? STAFF_BY_LOCATION["Pasir Ris West Wellness Centre"]
-                    : this.state.location === "CT Hub"
-                    ? STAFF_BY_LOCATION["CT Hub"]
-                    : this.state.location === "Tampines North Community Club"
-                    ? STAFF_BY_LOCATION["Tampines North Community Club"]
-                    : []
-                }
+                staffDropdownOptions={["Yeo Lih Yong", "Phang Hui San"]}
                 onStaffNameChange={this.handleStaffNameChange}
                 price={this.state.price} // <-- pass price here
                 onPriceChange={this.handlePriceChange}
               />
-            </div>
-          </div>
-          
-          {/* Right Column - Live Availability, AI Insights, Notifications */}
-          <div className="info-column">
-            {/* Live Availability Section */}
-            <div className="info-panel live-availability">
-              <h3>Live Availability</h3>
-              
-              {isLoading ? (
-                <div className="loading-indicator">Loading availability data...</div>
-              ) : error ? (
-                <div className="error-message">{error}</div>
-              ) : (
-                <div className="availability-overview">
-                  {/* Summary metrics section */}
-                  <div className="availability-summary">
-                    <div className="availability-metric">
-                      <span className="metric-label">Total Seats:</span>
-                      <span className="metric-value" style={{ fontWeight: 'bold', color: '#ffffff'}}>{availabilityData.totalSeats}</span>
-                    </div>
-                    <div className="availability-metric">
-                      <span className="metric-label">Available:</span>
-                      <span className="metric-value available">{availabilityData.available}</span>
-                    </div>
-                    <div className="availability-metric">
-                      <span className="metric-label">Booked:</span>
-                      <span className="metric-value reserved">{availabilityData.reserved}</span>
-                    </div>
-                  </div>
-                  
-                  <h4>Location Breakdown</h4>
-                  
-                  {/* Scrollable container for locations */}
-                  <div className="locations-scrollable-container">
-                    {Object.entries(availabilityData.locations).map(([loc, data]) => {
-                      const reservedSeats = data.total - data.available;
-                      const availablePercentage = (data.available / data.total) * 100;
-                      const reservedPercentage = (reservedSeats / data.total) * 100;
-                      
-                      return (
-                        <div key={loc} className="location-availability high-contrast vertical-layout">
-                          {/* SECTION 1: Location name and total */}
-                          <div className="location-section location-header-section">
-                              <span className="location-name">{loc}</span>
-                          </div>
-                          
-                          {/* SECTION 2: Status bars with labels */}
-                          <div className="location-section location-bars-section">
-                            <div className="availability-bar-wrapper">
-                              {/* Available portion */}
-                              <div 
-                                className="availability-bar available-bar" 
-                                style={{ width: `${availablePercentage}%` }}
-                              ></div>
-                              {/* Reserved portion */}
-                              <div 
-                                className="availability-bar reserved-bar" 
-                                style={{ width: `${reservedPercentage}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                          
-                          {/* SECTION 3: Statistics breakdown */}
-                          <div className="location-section location-stats-section">
-                            <div className="stats-grid">
-                              <div className="stats-item">
-                                <span className="stats-label">Total:</span>
-                                <span className="stats-value">{data.total}</span>
-                              </div>
-                              <div className="stats-item">
-                                <span className="stats-label">Available:</span>
-                                <span className="stats-value available">{data.available}</span>
-                              </div>
-                              <div className="stats-item">
-                                <span className="stats-label">Booked:</span>
-                                <span className="stats-value reserved">{reservedSeats}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Notes Section */}
-            <div className="info-panel notes">
-              <h3>Notes</h3>
-              <ul className="notes-list">
-                {this.state.notes.map(note => (
-                  <li key={note.id} className={`note-item ${note.type}`}>
-                    <span className="note-icon">
-                      {note.type === 'info'
-                        ? 'ℹ️'
-                        : note.type === 'warning'
-                        ? '⚠️'
-                        : '📝'}
-                    </span>
-                    <span className="note-message">{note.message}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Notifications Section */}
-           <div className="info-panel notifications">
-              <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                Notifications
-                <button
-                  style={{
-                    fontSize: '1rem',
-                    padding: '4px 12px',
-                    background: '#444',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => this.setState({ notifications: [] })}
-                  disabled={this.state.notifications.length === 0}
-                  title="Clear all notifications"
-                >
-                  Clear
-                </button>
-              </h3>
-              <div className="notifications-list">
-                {this.state.notifications.length === 0 ? (
-                  <div style={{ color: '#888', fontStyle: 'italic', padding: '12px' }}>
-                    No notifications.
-                  </div>
-                ) : (
-                  this.state.notifications.map(notification => (
-                    <div key={notification.id} className={`notification-item ${notification.type}`}>
-                      <div className="notification-header" style={{ fontWeight: 'bold', marginBottom: 2 }}>
-                        <span className="notification-icon">
-                          {notification.type === 'info'
-                            ? 'ℹ️'
-                            : notification.type === 'warning'
-                            ? '⚠️'
-                            : notification.type === 'reservation'
-                            ? '🎟️'
-                            : '📢'}
-                        </span>
-                        <span style={{ marginLeft: 8 }}>
-                          {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}{' '}
-                          {notification.date}
-                        </span>
-                      </div>
-                      <div className="notification-message" style={{ marginLeft: 28 }}>
-                        {notification.description || notification.message}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
           </div>
         </div>

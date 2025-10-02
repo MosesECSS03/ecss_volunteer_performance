@@ -105,6 +105,7 @@ class SeatDashboard extends Component {
     super(props);
     this.state = {
       selected: [],
+      isOpen: true,
     };
   }
 
@@ -173,8 +174,39 @@ class SeatDashboard extends Component {
     }
 
     return (
-      <div className="dashboard-container">
-        <h2 style={{ fontSize: '3rem' }}>Seat Reservation Dashboard</h2>
+      <div className="dashboard-container" style={{ display: this.state.isOpen ? 'block' : 'none' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '3rem', margin: 0 }}>Seat Reservation Dashboard</h2>
+          <button
+            onClick={() => this.setState({ isOpen: false })}
+            style={{
+              fontSize: '1.5rem',
+              padding: '8px 16px',
+              background: '#ff4444',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
+        </div>
+        
+        {/* Selected seats display */}
+        <div style={{ 
+          marginBottom: 16, 
+          fontSize: '1.5rem', 
+          color: '#fff', 
+          fontWeight: 'bold',
+          textAlign: 'center'
+        }}>
+          {selected.length === 0
+            ? "No seats selected"
+            : `Seats selected: ${selected.join(', ')}`
+          }
+        </div>
+
         <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
           <button
             className="clear-btn seat-action-gap"
