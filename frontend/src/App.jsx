@@ -11,6 +11,7 @@ class App extends Component {
     };
   }
 
+  //ok
   render() {
     return (
       <div className="app-container">
