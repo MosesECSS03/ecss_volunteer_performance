@@ -7,7 +7,6 @@ const LOCATIONS = [
   "Tampines North Community Club"
 ];
 
-//pl
 const STAFF_BY_LOCATION = {
   "CT Hub": ["Rosalind Ong", "Lam Lee Chin", "Yeo Lih Yong", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "Eileen Tan"],
   "Tampines North Community Club": ["Allison Teo", "Eileen Tan", "He Xiuxiang"],
