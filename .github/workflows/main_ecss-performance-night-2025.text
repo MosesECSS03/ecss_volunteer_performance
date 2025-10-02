@@ -44,8 +44,8 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
@@ -55,6 +55,13 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
+      
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_31A260CA89364CA5916F8EC69BDF93E0 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_5F4616C147A54CBB83ACE2CDF3E75FDC }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_031AB1EE49664B4F81EA3E951A781679 }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -62,5 +69,4 @@ jobs:
         with:
           app-name: 'ecss-performance-night-2025'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: .
