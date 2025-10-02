@@ -360,15 +360,22 @@ router.post('/', async function(req, res, next)
       // Instantiate controller and retrieve records
       var controller = new TicketSalesController();
       var result = await controller.getSalesRecords();
+      
+      console.log("Controller result:", result);
+      console.log("Result structure:", JSON.stringify(result, null, 2));
 
       // Emit all records to clients via WebSocket
-      if (io && result && result.length > 0) {
+      if (io && result && result.data && result.data.length > 0) {
+        console.log("Emitting to socket - data length:", result.data.length);
         io.emit('data-retrieve', {
           message: 'Data-Retrieve successfully',
-          allReservations: result
+          allReservations: result.data
         });
+      } else {
+        console.log("Not emitting to socket - no data or no io");
       }
 
+      console.log("Sending response:", { result });
       return res.json({ result });
     }
   } 

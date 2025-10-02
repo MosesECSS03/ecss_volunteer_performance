@@ -120,19 +120,42 @@ class SeatReservationPanel extends Component {
   // Fetch data when component mounts
   componentDidMount() {
     this.fetchAvailabilityData();
-    this.fetchNotifications(); // <-- Add this line
+    this.fetchNotifications();
 
-    this.socket = io(API_BASE_URL);
+    this.socket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+    
+    this.socket.on('connect', () => {
+      console.log('Socket connected successfully:', this.socket.id);
+    });
+    
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+    
     this.socket.on('reservation-updated', (data) => {
       console.log("Socket event received123", data);
       this.fetchAvailabilityData();
-      this.fetchNotifications(); // Optionally refresh notifications on update
+      this.fetchNotifications();
     });
 
     window.addEventListener('onesignal-notification', (e) => {
       console.log('OneSignal notification event:', e.detail);
       this.addNotification(e.detail);
     });
+  }
+
+  componentWillUnmount() {
+    if (this.socket) {
+      this.socket.off('reservation-updated');
+      this.socket.off('connect');
+      this.socket.off('connect_error');
+      this.socket.disconnect();
+    }
+    window.removeEventListener('onesignal-notification', this.addNotification);
   }
 
 
@@ -144,10 +167,10 @@ class SeatReservationPanel extends Component {
       console.log("Full API response:", response);
       console.log("Response data:", response.data);
       console.log("Response.data.result:", response.data.result);
-      console.log("Response.data.result:", response.data.result);
       
       // Based on the backend code: return res.json({ result });
-      // So the structure is response.data.result (which is the array directly)
+      // where result = { success: true, data: records }
+      // So the structure is response.data.result.data
       let records = response.data.result.data;
       
       console.log("Final records:", records);
@@ -156,8 +179,20 @@ class SeatReservationPanel extends Component {
       
       if (!records || !Array.isArray(records)) {
         console.error("No valid records found in API response");
-        this.setState({ isLoading: false });
-        return;
+        console.log("Attempting alternative data access...");
+        // Try alternative access patterns
+        if (response.data.result && Array.isArray(response.data.result)) {
+          records = response.data.result;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          records = response.data.data;
+        } else {
+          console.error("Could not find records in any expected location");
+          this.setState({ 
+            isLoading: false,
+            error: "No data found" 
+          });
+          return;
+        }
       }
 
       // Generate all seat IDs (e.g. C01, C02, ..., M25)

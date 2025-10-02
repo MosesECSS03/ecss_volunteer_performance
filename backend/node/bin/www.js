@@ -21,7 +21,16 @@ var server = http.createServer(app);
 
 // --- Add Socket.IO setup ---
 const { Server } = require("socket.io");
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { 
+  cors: { 
+    origin: [
+      "http://localhost:3000",
+      "https://white-stone-093a71d10.6.azurestaticapps.net"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 app.set('io', io); // Make io available in routes
 
 io.on('connection', (socket) => {

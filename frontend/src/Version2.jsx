@@ -33,17 +33,32 @@ class Version2 extends Component {
     // Initial data fetch
     this.fetchInitialData();
 
-    // Connect to socket
-    this.socket = io(API_BASE_URL);
+    // Connect to socket with better configuration
+    this.socket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+    
+    this.socket.on('connect', () => {
+      console.log('Version2 Socket connected successfully:', this.socket.id);
+    });
+    
+    this.socket.on('connect_error', (error) => {
+      console.error('Version2 Socket connection error:', error);
+    });
  
-     this.socket.on('reservation-updated', (data) => {
-       console.log("Socket event received", data);
-          this.fetchInitialData();
-     });
+    this.socket.on('reservation-updated', (data) => {
+      console.log("Version2 Socket event received", data);
+      this.fetchInitialData();
+    });
   }
   
   componentWillUnmount() {
     if (this.socket) {
+      this.socket.off('reservation-updated');
+      this.socket.off('connect');
+      this.socket.off('connect_error');
       this.socket.disconnect();
     }
   }
