@@ -135,7 +135,6 @@ class SeatReservationPanel extends Component {
     });
   }
 
-//ol
 
   // Method to fetch availability data from API
   fetchAvailabilityData = async () => {
