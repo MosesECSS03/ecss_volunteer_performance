@@ -85,7 +85,7 @@ class Version2 extends Component {
 
     return (
       <div className="smart-dashboard-container">
-        <h1>AI Seat Reservation Dashboard</h1>
+        <h1>ECSS Musical Concert 2025 Seat Reservation Dashboard</h1>
         
         <div className="dashboard-navigation">
           <button 
