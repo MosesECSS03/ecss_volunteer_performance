@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import './RegistrationForm.css';
 
-//ok
 const LOCATIONS = [
   "CT Hub",
   "Pasir Ris West Wellness Centre",
