@@ -594,17 +594,8 @@ class SeatReservationPanel extends Component {
       selectedSeatsCount
     } = this.state;
     
-    // AI insights (mock data)
-    const aiInsights = [
-      { id: 1, message: "Based on current trends, CT Hub will be fully booked in the next hour." },
-      { id: 2, message: "Consider opening additional seats in Pasir Ris to meet demand." },
-      { id: 3, message: "Peak reservation times are approaching. Prepare for increased activity." }
-    ];
-    
     return (
       <div className="seat-reservation-panel">
-        <h2>Seat Reservation</h2>
-        
         <div className="reservation-layout">
           {/* Left Column - Button to open Seating Plan and Registration Form */}
           <div className="seating-plan-column">
