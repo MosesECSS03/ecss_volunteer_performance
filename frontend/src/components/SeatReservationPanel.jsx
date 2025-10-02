@@ -14,26 +14,35 @@ const API_BASE_URL =
 
 // Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
 function expandSeatRanges(seatRanges) {
+  console.log("expandSeatRanges input:", seatRanges);
   const result = [];
-  seatRanges.forEach(range => {
+  seatRanges.forEach((range, index) => {
+    console.log(`Processing range ${index}: "${range}"`);
     range.split(',').forEach(part => {
       const trimmed = part.trim();
+      console.log(`Processing part: "${trimmed}"`);
       if (trimmed.includes('-')) {
         const [start, end] = trimmed.split('-').map(s => s.trim());
+        console.log(`Found range: "${start}" to "${end}"`);
         if (start[0] === end[0]) {
           // Same row
           const row = start[0];
           const startNum = parseInt(start.slice(1), 10);
           const endNum = parseInt(end.slice(1), 10);
+          console.log(`Expanding row ${row} from ${startNum} to ${endNum}`);
           for (let i = startNum; i <= endNum; i++) {
-            result.push(`${row}${i.toString().padStart(2, '0')}`);
+            const seat = `${row}${i.toString().padStart(2, '0')}`;
+            console.log(`Adding seat: ${seat}`);
+            result.push(seat);
           }
         }
       } else if (trimmed) {
+        console.log(`Adding individual seat: ${trimmed}`);
         result.push(trimmed);
       }
     });
   });
+  console.log("expandSeatRanges result:", result);
   return result;
 }
 
@@ -129,12 +138,26 @@ class SeatReservationPanel extends Component {
   // Method to fetch availability data from API
   fetchAvailabilityData = async () => {
     try {
+      console.log("Starting fetchAvailabilityData...");
       const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
-      const records = response.data.result.data;
-      console.log("Records fetched:", records);
-
-      // Process the records to calculate availability
-      const availabilityData = this.processAvailabilityData(records);
+      console.log("Full API response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response.data.result:", response.data.result);
+      console.log("Response.data.result:", response.data.result);
+      
+      // Based on the backend code: return res.json({ result });
+      // So the structure is response.data.result (which is the array directly)
+      let records = response.data.result.data;
+      
+      console.log("Final records:", records);
+      console.log("Records type:", typeof records);
+      console.log("Records is array:", Array.isArray(records));
+      
+      if (!records || !Array.isArray(records)) {
+        console.error("No valid records found in API response");
+        this.setState({ isLoading: false });
+        return;
+      }
 
       // Generate all seat IDs (e.g. C01, C02, ..., M25)
       const allSeatRows = [
@@ -149,26 +172,30 @@ class SeatReservationPanel extends Component {
 
       // Find reserved seats from records
       const reservedSeats = new Set();
-      records.forEach(record => {
+      records.forEach((record, index) => {
+        console.log(`Processing record ${index}:`, record);
+        console.log(`Record ${index} seats:`, record.seats);
+        
         if (record.seats && Array.isArray(record.seats)) {
+          console.log(`Expanding seat ranges for record ${index}:`, record.seats);
           // Expand seat ranges if needed
           const expanded = expandSeatRanges(record.seats);
-          expanded.forEach(seat => reservedSeats.add(seat));
+          console.log(`Expanded seats for record ${index}:`, expanded);
+          expanded.forEach(seat => {
+            console.log(`Adding seat to reserved set: ${seat}`);
+            reservedSeats.add(seat);
+          });
         }
       });
-      console.log("Reserved seats:", reservedSeats);
-
-      // Compute available seats
-      const availableSeats = allSeatIds.filter(seatId => !reservedSeats.has(seatId));
-
+      console.log("All reserved seats (Set):", reservedSeats);
+      console.log("Reserved seats (Array):", Array.from(reservedSeats));
 
       this.setState({
         records: records.length,
-        availabilityData,
-        availableSeats, // <-- Add this line
-        reservedSeats: Array.from(reservedSeats), // <-- add this line
+        reservedSeats: Array.from(reservedSeats),
         isLoading: false
       });
+    
     } catch (error) {
       console.error("Error fetching availability data:", error);
       this.setState({
@@ -205,35 +232,12 @@ class SeatReservationPanel extends Component {
     const booked = reservedSeats.size;
     const available = totalSeats - booked;
 
-    // Calculate per-location availability
-    const locations = {
-      'CT Hub': { total: 125, available: 125 },
-      'Tampines North Community Club': { total: 100, available: 100 },
-      'Pasir Ris West Wellness Centre': { total: 50, available: 50 }
-    };
-
-    reservedSeats.forEach(seatId => {
-      const loc = this.determineLocationFromSeat(seatId);
-      if (locations[loc]) {
-        locations[loc].available -= 1;
-      }
-    });
-
     return {
       totalSeats,
       available,
       reserved: booked,
-      locations
+      locations: {} // Default empty locations object
     };
-  };
-  
-  // Helper method to determine location from seat ID (if needed)
-  determineLocationFromSeat = (seatId) => {
-    // Example logic - should be adapted to your actual seat ID format
-    getLocationFromSeat = (seatId) => {
-    // Since location is removed, return a default value
-    return 'ECSS Performance Night';
-  };
   };
 
   handleSeatSelect = (seatId) => {
@@ -620,6 +624,12 @@ class SeatReservationPanel extends Component {
                       selectedSeats={this.state.selectedSeats}
                       viewOnly={isViewOnly} // Use dynamic view-only prop
                     />
+                    {/* Debug info */}
+                    <div style={{background: 'yellow', padding: '10px', margin: '10px'}}>
+                      <strong>Debug - Reserved Seats:</strong><br/>
+                      Count: {this.state.reservedSeats?.length || 0}<br/>
+                      Seats: {JSON.stringify(this.state.reservedSeats)}
+                    </div>
                   </div>
                 </div>
               </div>

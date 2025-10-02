@@ -14,7 +14,7 @@ const API_BASE_URL = window.location.hostname === "localhost"
 const sectionColors = {
   available: "rgb(0, 79, 140)",
   selected: "#DAA520",  // Golden color for selected
-  reserved: "rgb(126, 0, 0)",
+  reserved: "#8B0000",  // Dark red color for reserved (more visible)
 };
 
 // Helper function to determine seat color
@@ -133,6 +133,11 @@ class SeatingPlan extends Component {
     const selectedSeats = Array.isArray(selected) ? selected : [];
     const SEAT_WIDTH = 50;
     const GAP_WIDTH = 100;
+
+    // Debug logging for reserved seats
+    console.log("SeatingPlan render - reservedSeats:", reservedSeats);
+    console.log("SeatingPlan render - reservedSeats type:", typeof reservedSeats);
+    console.log("SeatingPlan render - reservedSeats length:", reservedSeats?.length);
 
     // Group seat labels for display
     const groupSeatLabels = (seatLabels) => {
@@ -340,6 +345,11 @@ const SeatRow = ({ rowLetter, selected, reservedSeats, SEAT_WIDTH, GAP_WIDTH, on
         const isSelected = selected.includes(seatLabel);
         const isReserved = reservedSeats.includes(seatLabel);
         const seatColor = getSeatColor(isReserved, isSelected);
+        
+        // Debug logging for seat rendering
+        if (isReserved) {
+          console.log(`Seat ${seatLabel} is reserved, color: ${seatColor}`);
+        }
         
         return (
           <div key={seatLabel} className="seat-container" style={{width: SEAT_WIDTH, minWidth: SEAT_WIDTH}}>

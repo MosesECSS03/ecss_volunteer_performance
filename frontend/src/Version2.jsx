@@ -63,7 +63,8 @@ class Version2 extends Component {
   // Data fetching
   fetchInitialData = async () => {
     try {
-      // Fetch initial data implementation
+      // SeatReservationPanel handles its own data fetching
+      // No need to fetch reserved seats here
       this.setState({ isLoading: false });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -107,7 +108,6 @@ class Version2 extends Component {
             <div className="reservation-section">
                 <SeatReservationPanel 
                   seats={seats}
-                  reservedSeats={reservedSeats}
                   socket={this.socket}
                 />
             </div>
