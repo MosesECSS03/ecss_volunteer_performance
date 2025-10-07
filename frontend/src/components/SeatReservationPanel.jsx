@@ -622,73 +622,82 @@ class SeatReservationPanel extends Component {
     } = this.state;
     
     return (
-      <div className="seat-reservation-panel">
         <div className="reservation-layout">
-          {/* Left Column - Button to open Seating Plan and Registration Form */}
+          {/* Left Column - Registration Form and optional View Seating Plan button */}
           <div className="seating-plan-column">
-            <button 
-              className="view-seating-plan-btn"
-              onClick={this.toggleSeatingPlan}
-            >
-              <span className="btn-icon">🎭</span>
-              View Seating Plan
-            </button>
 
-            {/* Seating Plan Popup */}
-            {isSeatingPlanOpen && (
-              <div className="seating-plan-modal-overlay">
-                <div className="seating-plan-modal">
-                  <div className="seating-plan-modal-header">
-                    <h3>Seating Plan</h3>
-                    <button 
-                      className="close-modal-btn"
-                      onClick={() => {
-                        this.setState({ isSeatingPlanOpen: false });
-                      }}
-                    >
-                      &times;
-                    </button>
-                  </div>
-                  <div className="seating-plan-modal-body">
-                    <SeatingPlan
-                      ref={this.seatingPlanRef}
-                      availableSeats={this.state.availableSeats}
-                      reservedSeats={this.state.reservedSeats} // <-- pass here
-                      noOfReservedSeats={this.state.selectedSeatsCount}
-                      onSeatsSelected={isViewOnly ? null : this.handleSeatsSelected} // Enable/disable based on mode
-                      onClearSelection={isViewOnly ? null : this.handleClearSelection} // Enable/disable based on mode
-                      selectedSeats={this.state.selectedSeats}
-                      viewOnly={isViewOnly} // Use dynamic view-only prop
-                    />
-                    {/* Debug info */}
-                    <div style={{background: 'yellow', padding: '10px', margin: '10px'}}>
-                      <strong>Debug - Reserved Seats:</strong><br/>
-                      Count: {this.state.reservedSeats?.length || 0}<br/>
-                      Seats: {JSON.stringify(this.state.reservedSeats)}
+            {/* If in viewOnlyMode, show seating plan directly */}
+            {this.props.viewOnlyMode ? (
+              <div className="view-only-seating-plan">
+                <SeatingPlan
+                  ref={this.seatingPlanRef}
+                  availableSeats={this.state.availableSeats}
+                  reservedSeats={this.state.reservedSeats}
+                  noOfReservedSeats={this.state.selectedSeatsCount}
+                  onSeatsSelected={null} // Disable selection in view-only mode
+                  onClearSelection={null} // Disable clearing in view-only mode
+                  selectedSeats={[]} // No selected seats in view-only mode
+                  viewOnly={true} // Always view-only
+                />
+              </div>
+            ) : (
+              <>
+                {/* Seating Plan Popup - only show if not in viewOnlyMode */}
+                {isSeatingPlanOpen && (
+                  <div className="seating-plan-modal-overlay">
+                    <div className="seating-plan-modal">
+                      <div className="seating-plan-modal-header">
+                        <h3>Seating Plan</h3>
+                        <button 
+                          className="close-modal-btn"
+                          onClick={() => {
+                            this.setState({ isSeatingPlanOpen: false });
+                          }}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                      <div className="seating-plan-modal-body">
+                        <SeatingPlan
+                          ref={this.seatingPlanRef}
+                          availableSeats={this.state.availableSeats}
+                          reservedSeats={this.state.reservedSeats} // <-- pass here
+                          noOfReservedSeats={this.state.selectedSeatsCount}
+                          onSeatsSelected={isViewOnly ? null : this.handleSeatsSelected} // Enable/disable based on mode
+                          onClearSelection={isViewOnly ? null : this.handleClearSelection} // Enable/disable based on mode
+                          selectedSeats={this.state.selectedSeats}
+                          viewOnly={isViewOnly} // Use dynamic view-only prop
+                        />
+                        {/* Debug info */}
+                        <div style={{background: 'yellow', padding: '10px', margin: '10px'}}>
+                          <strong>Debug - Reserved Seats:</strong><br/>
+                          Count: {this.state.reservedSeats?.length || 0}<br/>
+                          Seats: {JSON.stringify(this.state.reservedSeats)}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* Registration Form (inline, not popup) */}
-            <div className="registration-form-section">
-              <RegistrationForm
-                selectedSeatsCount={this.state.selectedSeatsCount}
-                reservedSeats={this.state.selectedSeats}
-                onSubmit={this.handleRegistrationSubmit}
-                onAutoSelectSeats={this.openSeatingPlan}
-                onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
-                staffName={this.state.staffName}
-                staffDropdownOptions={["Yeo Lih Yong", "Phang Hui San"]}
-                onStaffNameChange={this.handleStaffNameChange}
-                price={this.state.price} // <-- pass price here
-                onPriceChange={this.handlePriceChange}
-              />
-            </div>
+                {/* Registration Form (inline, not popup) - only show if not in viewOnlyMode */}
+                <div className="registration-form-section">
+                  <RegistrationForm
+                    selectedSeatsCount={this.state.selectedSeatsCount}
+                    reservedSeats={this.state.selectedSeats}
+                    onSubmit={this.handleRegistrationSubmit}
+                    onAutoSelectSeats={this.openSeatingPlan}
+                    onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
+                    staffName={this.state.staffName}
+                    staffDropdownOptions={["Yeo Lih Yong", "Phang Hui San"]}
+                    onStaffNameChange={this.handleStaffNameChange}
+                    price={this.state.price} // <-- pass price here
+                    onPriceChange={this.handlePriceChange}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
     );
   }
 }

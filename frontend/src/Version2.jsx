@@ -22,7 +22,8 @@ class Version2 extends Component {
       activeTab: 'reservation',
       aiSuggestions: [],
       notifications: [],
-      isLoading: true
+      isLoading: true,
+      showSeatingPlanModal: false
     };
     
     this.socket = null;
@@ -92,8 +93,23 @@ class Version2 extends Component {
     this.setState({ activeTab: tab });
   }
 
+  // Modal control methods
+  openSeatingPlanModal = () => {
+    console.log('Opening seating plan modal...');
+    this.setState({ showSeatingPlanModal: true }, () => {
+      console.log('Modal state after opening:', this.state.showSeatingPlanModal);
+    });
+  }
+
+  closeSeatingPlanModal = () => {
+    console.log('Closing seating plan modal...');
+    this.setState({ showSeatingPlanModal: false }, () => {
+      console.log('Modal state after closing:', this.state.showSeatingPlanModal);
+    });
+  }
+
   render() {
-    const { seats, reservedSeats, activeTab, isLoading } = this.state;
+    const { seats, reservedSeats, activeTab, isLoading, showSeatingPlanModal } = this.state;
     
     if (isLoading) {
       return <div>Loading dashboard...</div>;
@@ -108,17 +124,21 @@ class Version2 extends Component {
             className={activeTab === 'reservation' ? 'active' : ''} 
             onClick={() => this.handleTabChange('reservation')}
           >
-            Seat Reservation
+            Seat Reservation Form
+          </button>
+          <button 
+            className="seating-plan-modal-btn"
+            onClick={this.openSeatingPlanModal}
+          >
+            🎭 View Seating Plan
           </button>
           <button 
             className={activeTab === 'reports' ? 'active' : ''} 
             onClick={() => this.handleTabChange('reports')}
           >
-            Reports
+            📊 Search & Generate Reports
           </button>
-        </div>
-        
-        <div className="dashboard-content">
+        </div>        <div className="dashboard-content">
           {activeTab === 'reservation' && (
             <div className="reservation-section">
                 <SeatReservationPanel 
@@ -133,8 +153,28 @@ class Version2 extends Component {
               <ReportGenerator />
             </div>
           )}
-          
         </div>
+
+        {/* Seating Plan Modal */}
+        {this.state.showSeatingPlanModal && (
+          <div className="modal-overlay" onClick={this.closeSeatingPlanModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Seating Plan</h2>
+                <button className="modal-close-btn" onClick={this.closeSeatingPlanModal}>
+                  ×
+                </button>
+              </div>
+              <div className="modal-body">
+                <SeatReservationPanel 
+                  seats={seats}
+                  socket={this.socket}
+                  viewOnlyMode={true}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
