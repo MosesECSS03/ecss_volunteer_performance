@@ -99,9 +99,8 @@
 
 .results-cards {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 16px;
   max-height: 500px;      /* Set your preferred height */
   overflow-y: auto;       /* Enable vertical scrolling */
@@ -109,8 +108,7 @@
 }
 
 .professional-card {
-  width: 350px;
-  max-width: 95vw;
+  width: 100%;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1), 0 1.5px 6px rgba(0, 0, 0, 0.06);
   border: 1px solid #e3eaf2;
