@@ -98,10 +98,8 @@ class RegistrationForm extends Component {
     
     console.log("Form data being submitted:", {
       name,
-      staffName: staffNameTitle,
-      paymentType,
+      staffName: 'Phang Hui San',
       paymentRef,
-      price: priceFloat,
       selectedSeatsCount,
       seats: (reservedSeats || []).map(formatSeatLabel),
     });
