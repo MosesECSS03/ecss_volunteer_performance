@@ -59,16 +59,11 @@ class ReportGenerator extends Component {
     
      console.log('Filtered Records:', filteredRecords);
 
-    // Export all columns
+    // Export essential columns only
     const exportRows = filteredRecords.map((row, index) => ({
       id: index + 1,
       name: row.name,
       staffName: row.staffName,
-      location: row.location,
-      price: typeof row.price === 'number'
-        ? `$${row.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : row.price,
-      paymentType: row.paymentType,
       paymentRef: row.paymentRef,
       selectedSeatsCount: row.selectedSeatsCount,
       bookingNo: row.bookingNo,
@@ -81,10 +76,7 @@ class ReportGenerator extends Component {
       '#',
       'Name',
       'Staff',
-      'Location',
-      'Donation Amount',
-      'Payment Type',
-      'Payment Ref',
+      'Contact Number',
       'No. of Seats',
       'Booking No',
       'Seats',
@@ -96,9 +88,6 @@ class ReportGenerator extends Component {
       'id',
       'name',
       'staffName',
-      'location',
-      'price',
-      'paymentType',
       'paymentRef',
       'selectedSeatsCount',
       'bookingNo',

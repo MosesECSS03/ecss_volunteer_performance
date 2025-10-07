@@ -109,8 +109,6 @@ class SeatReservationPanel extends Component {
       error: null,
       records: 0,
       notifications: [], // <-- Add this line
-      staffName: '', // <-- Add this line
-      price: 0, // <-- Add this line
     };
 
     // Add this in your constructor
@@ -352,17 +350,8 @@ class SeatReservationPanel extends Component {
       const notificationDate = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
       const time = notificationDate;
   
-      // Ensure price is always correct and included
-      const price = this.state.price;
-  
-      // Allow price of 0 (free booking) but require minimum $35 for paid bookings
-      if (isNaN(price) || (price > 0 && price < 35)) {
-        alert("Total Price must be at least $35.00");
-        return;
-      }
-  
-      // Add bookingNo, time, and price to formData
-      const submission = { ...formData, bookingNo, time, price };
+      // Add bookingNo and time to formData
+      const submission = { ...formData, bookingNo, time };
       console.log("Registration submitted:", submission);
   
       // --- Check for overlapping reserved seats before proceeding ---
@@ -499,14 +488,12 @@ class SeatReservationPanel extends Component {
   // Handler for seat count change
   handleSelectedSeatsCountChange = (count) => {
     const numCount = Number(count);
-    const price = numCount * 35;
-    console.log("Selected seats count changed:", count, price);
+    console.log("Selected seats count changed:", count);
     
     // If count is 0 or empty, clear selected seats as well
     if (!count || count === '' || numCount <= 0) {
       this.setState({ 
         selectedSeatsCount: count, 
-        price: 0,
         selectedSeats: [] // Clear selected seats when count is 0/empty
       });
       
@@ -514,7 +501,7 @@ class SeatReservationPanel extends Component {
       // This ensures name and paymentRef are cleared immediately
       this.forceUpdate();
     } else {
-      this.setState({ selectedSeatsCount: count, price });
+      this.setState({ selectedSeatsCount: count });
     }
   };
 
@@ -528,15 +515,13 @@ class SeatReservationPanel extends Component {
       // User is selecting seats - update everything
       this.setState({
         selectedSeats,
-        selectedSeatsCount,
-        price: selectedSeatsCount * 35
+        selectedSeatsCount
       });
     } else {
       // User is clearing selection - clear everything including the seat count field
       this.setState({
         selectedSeats,
-        selectedSeatsCount: '', // Clear the seat count field to make form blank
-        price: 0
+        selectedSeatsCount: '' // Clear the seat count field to make form blank
       });
     }
     console.log("Seats selected from SeatingPlan:", selectedSeats);
@@ -555,8 +540,7 @@ class SeatReservationPanel extends Component {
     this.setState(
       { 
         cfmSelectedSeatsCount: count,
-        isSeatingPlanOpen: true,
-        price: count * 35 // set total price here
+        isSeatingPlanOpen: true
       },
       () => {
         // After opening the modal, trigger auto-select in SeatingPlan only if count > 0
@@ -567,14 +551,6 @@ class SeatReservationPanel extends Component {
     );
   };
   
-  handleStaffNameChange = (staffName) => {
-    this.setState({ staffName });
-  };
-
-  handleStaffDropdownChange = (e) => {
-    this.props.onStaffNameChange(e.target.value);
-  };
-
   addNotification = (notification) => {
   console.log("Adding notification:", notification);
     this.setState(prevState => ({
@@ -583,10 +559,6 @@ class SeatReservationPanel extends Component {
         { id: Date.now(), ...notification }
       ]
     }));
-  };
-
-  handlePriceChange = (price) => {
-    this.setState({ price });
   };
 
   // New method to fetch notifications from the server
@@ -687,11 +659,6 @@ class SeatReservationPanel extends Component {
                     onSubmit={this.handleRegistrationSubmit}
                     onAutoSelectSeats={this.openSeatingPlan}
                     onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
-                    staffName={this.state.staffName}
-                    staffDropdownOptions={["Yeo Lih Yong", "Phang Hui San"]}
-                    onStaffNameChange={this.handleStaffNameChange}
-                    price={this.state.price} // <-- pass price here
-                    onPriceChange={this.handlePriceChange}
                   />
                 </div>
               </>

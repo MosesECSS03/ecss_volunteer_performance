@@ -51,9 +51,7 @@ class RegistrationForm extends Component {
       name: '',
       staffName: '',
       location: '',
-      paymentType: '',
       paymentRef: '',
-      price: 0,
       showPriceError: false, // <-- add this
     };
   }
@@ -72,10 +70,6 @@ class RegistrationForm extends Component {
     this.setState({ [name]: value });
   };
 
-  handlePaymentTypeChange = (e) => {
-    this.setState({ paymentType: e.target.value });
-  };
-
   handlePaymentRefChange = (e) => {
     this.setState({ paymentRef: e.target.value });
   };
@@ -85,34 +79,20 @@ class RegistrationForm extends Component {
     this.setState({
       name: '',
       paymentRef: '',
-      price: 0,
     });
-  };
-
-  handleStaffDropdownChange = (e) => {
-    this.setState({ staffName: e.target.value });
   };
 
   handleSubmit = (e) => {
     console.log("Submitting form...");
     e.preventDefault();
-    let { name, paymentType, paymentRef, price } = this.state;
-    const { staffName, selectedSeatsCount, reservedSeats } = this.props;
+    let { name, paymentRef } = this.state;
+    const { selectedSeatsCount, reservedSeats } = this.props;
     name = toTitleCase(name.trim());
-    const staffNameTitle = toTitleCase((staffName || '').trim());
   
-    // Use price from local state (user entered)
-    const priceFloat = parseFloat(price);
-  
-    // Allow price of 0 (free booking) but require minimum $35 for paid bookings
-    if (isNaN(priceFloat) || (priceFloat > 0 && priceFloat < 35.00)) {
-      this.setState({ showPriceError: true }); // <-- show popup
-      return;
-    }
-  
-    // Updated validation - removed location requirement since it was removed
-    if (!name || !staffNameTitle || !paymentType || !paymentRef || selectedSeatsCount === 0) {
-      console.log("Form validation failed:", { name, staffNameTitle, paymentType, paymentRef, selectedSeatsCount });
+    // Simplified validation - no price validation needed
+    if (!name || !paymentRef || selectedSeatsCount === 0) {
+      console.log("Form validation failed:", { name, paymentRef, selectedSeatsCount });
+      alert("Please fill in all fields and select at least one seat.");
       return;
     }
     
@@ -128,10 +108,8 @@ class RegistrationForm extends Component {
     
     this.props.onSubmit({
       name,
-      staffName: staffNameTitle,
-      paymentType,
+      staffName: 'Phang Hui San', // Fixed staff name
       paymentRef,
-      price: priceFloat,
       selectedSeatsCount,
       seats: (reservedSeats || []).map(formatSeatLabel),
     });
@@ -151,16 +129,15 @@ class RegistrationForm extends Component {
   };
 
   render() {
-    const { name, paymentType, paymentRef, price } = this.state;
+    const { name, paymentRef } = this.state;
     const { selectedSeatsCount, reservedSeats, staffName } = this.props;
 
     // Progressive form logic - enable fields step by step
     const isNameComplete = name && name.trim().length > 0;
-    const isStaffComplete = staffName && staffName.trim().length > 0;
+    const isStaffComplete = isNameComplete; // Staff is always complete since it's a fixed value
     const isSeatsComplete = selectedSeatsCount > 0;
-    const isPaymentMethodComplete = paymentType && paymentType.length > 0;
     const isPaymentRefComplete = paymentRef && paymentRef.trim().length > 0;
-    const isPriceComplete = price && parseFloat(price) >= 0;
+    const isFormComplete = isPaymentRefComplete;
 
     return (
       <form className="reservation-form" onSubmit={this.handleSubmit}>
@@ -189,7 +166,7 @@ class RegistrationForm extends Component {
           />
         </label>
 
-        {/* Step 2: Staff Name - enabled after name is complete */}
+        {/* Step 2: Staff Name - fixed value */}
         <label style={{ 
           fontSize: '1.5rem',
           opacity: isNameComplete ? 1 : 0.5,
@@ -197,34 +174,16 @@ class RegistrationForm extends Component {
         }}>
           Staff Name
         </label>
-        {
-          this.props.staffDropdownOptions && this.props.staffDropdownOptions.length > 0 && (
-            <div style={{ margin: '0' }}>
-              <select
-                value={this.props.staffName}
-                onChange={e => this.props.onStaffNameChange(e.target.value)}
-                disabled={!isNameComplete}
-                style={{ 
-                  fontSize: '1.5rem', 
-                  width: '100%', 
-                  marginTop: 8,
-                  backgroundColor: isNameComplete ? '#333' : '#222',
-                  border: `1px solid ${isStaffComplete ? '#4efa85' : '#555'}`,
-                  borderRadius: '4px',
-                  padding: '10px 12px',
-                  color: isNameComplete ? 'white' : '#666',
-                  cursor: isNameComplete ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.3s ease'
-                }}
-                required
-              >
-                <option value="">-- Select Staff --</option>
-                {this.props.staffDropdownOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-          )}
+        <div style={{ 
+          fontSize: '1.5rem', 
+          width: '100%', 
+          marginTop: 8,
+          color: 'white',
+          textAlign: 'left',
+          padding: '0'
+        }}>
+          Phang Hui San
+        </div>
 
         {/* Step 3: Seat Selection - enabled after staff is complete */}
         <div style={{ 
@@ -288,53 +247,10 @@ class RegistrationForm extends Component {
           </div>
         )}
 
-        {/* Step 4: Payment Method - enabled after seats are selected */}
-        <div className="payment-method-container" style={{ 
-          fontSize: '1.5rem',
-          opacity: isSeatsComplete ? 1 : 0.5,
-          transition: 'opacity 0.3s ease'
-        }}>
-          <label style={{ fontWeight: 'normal', textAlign: 'center', width: '100%' }}>Payment Method</label>
-          <div className="payment-options-row">
-            <label style={{ display: 'flex', alignItems: 'center' }}>
-              <input
-                type="radio"
-                name="paymentType"
-                value="Cash"
-                checked={paymentType === 'Cash'}
-                onChange={this.handlePaymentTypeChange}
-                disabled={!isSeatsComplete}
-                style={{ 
-                  width: 18, 
-                  height: 18,
-                  cursor: isSeatsComplete ? 'pointer' : 'not-allowed'
-                }}
-              />
-              Cash
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center' }}>
-              <input
-                type="radio"
-                name="paymentType"
-                value="Paynow"
-                checked={paymentType === 'Paynow'}
-                onChange={this.handlePaymentTypeChange}
-                disabled={!isSeatsComplete}
-                style={{ 
-                  width: 18, 
-                  height: 18,
-                  cursor: isSeatsComplete ? 'pointer' : 'not-allowed'
-                }}
-              />
-              Paynow
-            </label>
-          </div>
-        </div>
-
-        {/* Step 5: Payment Reference - enabled after payment method is selected */}
+        {/* Step 4: Payment Reference - enabled after seats are selected */}
         <label style={{ 
           fontSize: '1.5rem',
-          opacity: isPaymentMethodComplete ? 1 : 0.5,
+          opacity: isSeatsComplete ? 1 : 0.5,
           transition: 'opacity 0.3s ease'
         }}>
           Payment reference
@@ -343,74 +259,38 @@ class RegistrationForm extends Component {
             name="paymentRef"
             value={paymentRef}
             required
-            disabled={!isPaymentMethodComplete}
+            disabled={!isSeatsComplete}
             onChange={this.handlePaymentRefChange}
             placeholder="Enter mobile number"
             style={{ 
               fontSize: '1.5rem',
-              backgroundColor: isPaymentMethodComplete ? '#333' : '#222',
+              backgroundColor: isSeatsComplete ? '#333' : '#222',
               border: `1px solid ${isPaymentRefComplete ? '#4efa85' : '#555'}`,
               borderRadius: '4px',
               padding: '10px 12px',
-              color: isPaymentMethodComplete ? 'white' : '#666',
+              color: isSeatsComplete ? 'white' : '#666',
               width: '100%',
-              cursor: isPaymentMethodComplete ? 'text' : 'not-allowed',
+              cursor: isSeatsComplete ? 'text' : 'not-allowed',
               transition: 'all 0.3s ease'
             }}
           />
         </label>
 
-        {/* Step 6: Total Price - enabled after payment reference is complete */}
-        <div style={{ 
-          marginTop: 16,
-          opacity: isPaymentRefComplete ? 1 : 0.5,
-          transition: 'opacity 0.3s ease'
-        }}>
-          <label style={{ fontSize: '1.5rem', width: '100%' }}>
-            Total Price $
-            <input
-              type="text"
-              name="price"
-              value={this.state.price || ''}
-              disabled={!isPaymentRefComplete}
-              onChange={e => {
-                this.setState({ price: e.target.value });
-                if (this.props.onPriceChange) {
-                  this.props.onPriceChange(e.target.value);
-                }
-              }}
-              style={{
-                fontSize: '1.5rem',
-                backgroundColor: isPaymentRefComplete ? '#333' : '#222',
-                border: `1px solid ${isPriceComplete ? '#4efa85' : '#555'}`,
-                borderRadius: '4px',
-                padding: '10px 12px',
-                color: isPaymentRefComplete ? 'white' : '#666',
-                marginTop: '8px',
-                width: '100%',
-                cursor: isPaymentRefComplete ? 'text' : 'not-allowed',
-                transition: 'all 0.3s ease'
-              }}
-              placeholder='State the total price here'
-              required
-            />
-          </label>
-        </div>
-
-        {/* Step 7: Submit - enabled when all fields are complete */}
+        {/* Step 5: Submit - enabled when all fields are complete */}
         <button 
           type="submit" 
-          disabled={!isPriceComplete || selectedSeatsCount === 0} 
+          disabled={!isFormComplete || this.props.selectedSeatsCount === 0} 
           style={{ 
             fontSize: '1.5rem', 
             padding: '10px 24px',
-            backgroundColor: (isPriceComplete && selectedSeatsCount > 0) ? '#0078d4' : '#666',
-            color: (isPriceComplete && selectedSeatsCount > 0) ? 'white' : '#999',
-            cursor: (isPriceComplete && selectedSeatsCount > 0) ? 'pointer' : 'not-allowed',
+            backgroundColor: (isFormComplete && this.props.selectedSeatsCount > 0) ? '#0078d4' : '#666',
+            color: (isFormComplete && this.props.selectedSeatsCount > 0) ? 'white' : '#999',
+            cursor: (isFormComplete && this.props.selectedSeatsCount > 0) ? 'pointer' : 'not-allowed',
             border: 'none',
             borderRadius: '4px',
             transition: 'all 0.3s ease',
-            opacity: (isPriceComplete && selectedSeatsCount > 0) ? 1 : 0.6
+            opacity: (isFormComplete && this.props.selectedSeatsCount > 0) ? 1 : 0.6,
+            marginTop: '16px'
           }}
         >
           Submit
