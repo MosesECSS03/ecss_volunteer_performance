@@ -10,6 +10,7 @@ const scannedTicketsPath = path.join(__dirname, '../Others/scannedTickets.json')
 async function readScannedTickets() {
   try {
     const data = await fs.readFile(scannedTicketsPath, 'utf8');
+    console.log("Read scanned tickets data:", data);
     return data.trim() ? JSON.parse(data) : [];
   } catch (error) {
     // File doesn't exist or has error, return empty array
@@ -36,6 +37,7 @@ router.post('/', async function(req, res) {
 
     if (purpose === "scan") {
       const { seatNumber } = req.body;
+      console.log("Seat Number Scanned:", seatNumber);
       
       if (!seatNumber) {
         return res.status(400).json({ success: false, error: "Missing seat number" });
@@ -43,6 +45,10 @@ router.post('/', async function(req, res) {
 
       // Read existing scanned tickets from JSON file
       const scannedTickets = await readScannedTickets();
+      console.log("Current scanned tickets:", scannedTickets);
+      
+      // Write current state back to ensure file exists
+      await writeScannedTickets(scannedTickets);
 
       // Check if seat is already scanned
       const existingTicket = scannedTickets.find(ticket => ticket.seatNumber === seatNumber);
