@@ -20,7 +20,7 @@ class StatisticsPanel extends Component {
     
     try {
       // Simulating API call
-      // const response = await fetch(`/api/statistics?timeRange=${timeRange}`);
+      // const response = await fetch(`//statistics?timeRange=${timeRange}`);
       // const data = await response.json();
       
       // Placeholder data
