@@ -101,6 +101,35 @@ router.post('/', async function(req, res) {
         data: seatNumbers
       });
     }
+    else if (purpose === "check") {
+      const { seatNumber } = req.body;
+      console.log("Checking if seat exists:", seatNumber);
+      
+      if (!seatNumber) {
+        return res.status(400).json({ success: false, error: "Missing seat number" });
+      }
+
+      // Read existing scanned tickets from JSON file
+      const scannedTickets = await readScannedTickets();
+      
+      // Check if seat exists in scanned tickets
+      const existingTicket = scannedTickets.find(ticket => ticket.seatNumber === seatNumber);
+      
+      if (existingTicket) {
+        return res.json({ 
+          success: true, 
+          exists: true,
+          message: "Seat number found in scanned tickets",
+          data: existingTicket
+        });
+      } else {
+        return res.json({ 
+          success: true, 
+          exists: false,
+          message: "Seat number not found in scanned tickets"
+        });
+      }
+    }
     else {
       return res.status(400).json({ success: false, error: "Invalid purpose" });
     }
