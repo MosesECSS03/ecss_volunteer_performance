@@ -110,4 +110,31 @@ router.post('/', async function(req, res) {
   }
 });
 
+// GET route to retrieve and display all scanned tickets
+router.get('/', async function(req, res) {
+  try {
+    console.log("GET request - Retrieving scanned tickets");
+    
+    // Read from JSON file
+    const scannedTickets = await readScannedTickets();
+    console.log("GET route - Retrieved scanned tickets:", scannedTickets);
+    
+    // Return complete ticket data with seat numbers
+    return res.json({ 
+      success: true, 
+      data: scannedTickets,
+      seatNumbers: scannedTickets.map(ticket => ticket.seatNumber),
+      count: scannedTickets.length
+    });
+  } catch (error) {
+    console.error("Error in GET /scanned route:", error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      data: [],
+      count: 0
+    });
+  }
+});
+
 module.exports = router;

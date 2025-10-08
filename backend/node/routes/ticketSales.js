@@ -365,41 +365,4 @@ router.post('/', async function(req, res, next)
   }
 });
 
-// GET route to retrieve and display all ticket sales records
-router.get('/', async function(req, res, next) {
-  try {
-    // Instantiate controller and retrieve records
-    var controller = new TicketSalesController();
-    var result = await controller.getSalesRecords();
-    
-    console.log("GET route - Controller result:", result);
-    console.log("GET route - Result structure:", JSON.stringify(result, null, 2));
-
-    // Return the data for display
-    if (result && result.data) {
-      return res.json({ 
-        success: true, 
-        data: result.data,
-        count: result.data.length 
-      });
-    } else {
-      return res.json({ 
-        success: true, 
-        data: [],
-        count: 0,
-        message: "No records found"
-      });
-    }
-  } 
-  catch (error) {  
-    console.error("Error in GET / route:", error);
-    return res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      data: [],
-      count: 0
-    });
-  }
-});
-
 module.exports = router;
