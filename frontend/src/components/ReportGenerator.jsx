@@ -65,7 +65,6 @@ class ReportGenerator extends Component {
       name: row.name,
       staffName: row.staffName,
       paymentRef: row.paymentRef,
-      selectedSeatsCount: row.selectedSeatsCount,
       bookingNo: row.bookingNo,
       seats: Array.isArray(row.seats) ? row.seats.join(', ') : String(row.seats),
       bookedAt: row.time
@@ -77,7 +76,6 @@ class ReportGenerator extends Component {
       'Name',
       'Staff',
       'Contact Number',
-      'No. of Seats',
       'Booking No',
       'Seats',
       'Booked At'
@@ -89,7 +87,6 @@ class ReportGenerator extends Component {
       'name',
       'staffName',
       'paymentRef',
-      'selectedSeatsCount',
       'bookingNo',
       'seats',
       'bookedAt'
