@@ -144,7 +144,7 @@ class ReportGenerator extends Component {
           <div className="option-group">
             <div className="small-report-actions">
               {/*<button onClick={this.handleGeneratePDF} className="small-btn red-btn">Generate PDF</button>*/}
-              <button onClick={this.handleGenerateExcel} className="small-btn blue-btn">Generate Excel</button>
+              <button onClick={this.handleGenerateExcel} className="small-btn blue-btn">Export Excel</button>
             </div>
           </div>
         </div>

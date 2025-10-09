@@ -49,7 +49,7 @@ class RegistrationForm extends Component {
     super(props);
     this.state = {
       name: '',
-      staffName: '',
+      staffName: '', // Empty - user must select
       location: '',
       paymentRef: '',
       showPriceError: false, // <-- add this
@@ -85,20 +85,20 @@ class RegistrationForm extends Component {
   handleSubmit = (e) => {
     console.log("Submitting form...");
     e.preventDefault();
-    let { name, paymentRef } = this.state;
+    let { name, paymentRef, staffName } = this.state;
     const { selectedSeatsCount, reservedSeats } = this.props;
     name = toTitleCase(name.trim());
   
     // Simplified validation - no price validation needed
-    if (!name || !paymentRef || selectedSeatsCount === 0) {
-      console.log("Form validation failed:", { name, paymentRef, selectedSeatsCount });
+    if (!name || !paymentRef || !staffName || selectedSeatsCount === 0) {
+      console.log("Form validation failed:", { name, paymentRef, staffName, selectedSeatsCount });
       alert("Please fill in all fields and select at least one seat.");
       return;
     }
     
     console.log("Form data being submitted:", {
       name,
-      staffName: 'Phang Hui San',
+      staffName,
       paymentRef,
       selectedSeatsCount,
       seats: (reservedSeats || []).map(formatSeatLabel),
@@ -106,7 +106,7 @@ class RegistrationForm extends Component {
     
     this.props.onSubmit({
       name,
-      staffName: 'Phang Hui San', // Fixed staff name
+      staffName,
       paymentRef,
       selectedSeatsCount,
       seats: (reservedSeats || []).map(formatSeatLabel),
@@ -127,15 +127,15 @@ class RegistrationForm extends Component {
   };
 
   render() {
-    const { name, paymentRef } = this.state;
-    const { selectedSeatsCount, reservedSeats, staffName } = this.props;
+    const { name, paymentRef, staffName } = this.state;
+    const { selectedSeatsCount, reservedSeats } = this.props;
 
     // Progressive form logic - enable fields step by step
     const isNameComplete = name && name.trim().length > 0;
-    const isStaffComplete = isNameComplete; // Staff is always complete since it's a fixed value
-    const isSeatsComplete = selectedSeatsCount > 0;
+    const isStaffComplete = isNameComplete && staffName && staffName.trim().length > 0;
+    const isSeatsComplete = isStaffComplete && selectedSeatsCount > 0;
     const isPaymentRefComplete = paymentRef && paymentRef.trim().length > 0;
-    const isFormComplete = isPaymentRefComplete;
+    const isFormComplete = isSeatsComplete && isPaymentRefComplete;
 
     return (
       <form className="reservation-form" onSubmit={this.handleSubmit}>
@@ -164,7 +164,7 @@ class RegistrationForm extends Component {
           />
         </label>
 
-        {/* Step 2: Staff Name - fixed value */}
+        {/* Step 2: Staff Name - dropdown with default value */}
         <label style={{ 
           fontSize: '1.5rem',
           opacity: isNameComplete ? 1 : 0.5,
@@ -172,16 +172,28 @@ class RegistrationForm extends Component {
         }}>
           Staff Name
         </label>
-        <div style={{ 
-          fontSize: '1.5rem', 
-          width: '100%', 
-          marginTop: 8,
-          color: 'white',
-          textAlign: 'left',
-          padding: '0'
-        }}>
-          Phang Hui San
-        </div>
+        <select
+          name="staffName"
+          value={this.state.staffName}
+          onChange={this.handleChange}
+          disabled={!isNameComplete}
+          style={{
+            fontSize: '1.5rem',
+            padding: '8px 12px',
+            border: '2px solid white',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            width: '100%',
+            cursor: 'pointer',
+            outline: 'none'
+          }}
+        >
+          <option value="" style={{backgroundColor: '#333', color: 'white'}}>Select Staff Name</option>
+          <option value="Phang Hui San" style={{backgroundColor: '#333', color: 'white'}}>Phang Hui San</option>
+          <option value="Yeo Lih Yong" style={{backgroundColor: '#333', color: 'white'}}>Yeo Lih Yong</option>
+        </select>
 
         {/* Step 3: Seat Selection - enabled after staff is complete */}
         <div style={{ 
