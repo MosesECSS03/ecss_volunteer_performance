@@ -55,7 +55,7 @@ router.post('/', async function(req, res, next)
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
-            staffName: 'Phang Hui San',
+            staffName: record.staffName,
             location: record.location,
             time: record.time,
             bookingNo: record.bookingNo,
@@ -141,7 +141,7 @@ router.post('/', async function(req, res, next)
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
-            staffName: 'Phang Hui San',
+            staffName: record.staffName,
             location: record.location,
             time: record.time,
             bookingNo: record.bookingNo,
@@ -236,7 +236,7 @@ router.post('/', async function(req, res, next)
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
-            staffName: 'Phang Hui San',
+            staffName: record.staffName,
             location: record.location,
             time: record.time,
             bookingNo: record.bookingNo,
