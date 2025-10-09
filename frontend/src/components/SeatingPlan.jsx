@@ -4,8 +4,7 @@ import './SeatingPlan.css';
 
 const COLS = 26; // 6 left + 1 gap + 13 middle + 1 gap + 6 right
 const ROW_LETTERS = [
-  'C','D','E','F','G','H','I','J','K','L','M','N',
-  'O','P','Q','R','S','T','U','V','W','X', 'Y', 'Z'
+  'C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y'
 ];
 const API_BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:3001"
@@ -300,8 +299,16 @@ class SeatingPlan extends Component {
 // ====================
 const SeatRow = ({ rowLetter, selected, reservedSeats, SEAT_WIDTH, GAP_WIDTH, onSeatClick, viewOnly }) => {
   const getSeatNumbers = () => {
-    // Special case for row Y - only has seats Y05, Y04, Y03, Y02, Y01
+    // Special case for row Y - only middle section, no left/right seats
     if (rowLetter === 'Y') {
+      const left = ["empty", "empty", "empty", "empty", "empty"];     // Empty left section
+      const middle = [null, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7]; // 13 seats (19-7)
+      const right = ["empty", "empty", "empty", "empty", "empty", "empty"];  // Empty right section
+      return [...left, null, ...middle, null, ...right]; // Smaller gaps with single null
+    }
+
+    // Special case for row X - same configuration as row Y
+    if (rowLetter === 'X') {
       const left = [25, 24, 23, 22, 21];     // 5 seats (25-21)
       const middle = [null, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7]; // 13 seats (19-7)
       const right = [null, 5, 4, 3, 2, 1];  

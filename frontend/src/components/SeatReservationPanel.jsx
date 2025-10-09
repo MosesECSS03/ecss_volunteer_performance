@@ -85,26 +85,9 @@ class SeatReservationPanel extends Component {
       selectedSeatsCount: "", // <-- Add this line
       cfmSelectedSeatsCount: 0, // <-- Add this line
       locationFilter: 'all',
-      staffName: '', // simplified staff name
-      notes: [
-        { id: 1, type: 'info', message: 'Click "Get Seat(s)" to open seating plan and manually select seats' },
-        { id: 2, type: 'info', message: 'Press the "🎭View Seating Plan" button to view the seating plan popup' },
-        { id: 3, type: 'info', message: 'Choose any available seats by clicking on them in the seating plan' },
-        { id: 4, type: 'info', message: 'Submit the form to book the seat(s)' },
-        { id: 5, type: 'warning', message: 'Submit the form to book the seat(s)' },
-        { id: 6, type: 'warning', message: 'Each booking transaction must be at $35.' },
-        { id: 7, type: 'warning', message: 'VIP seats require special access' },
-        { id: 8, type: 'general', message: 'Do not need to worry if there is an overlapping of reserved and selected seats.' },
-        { id: 9, type: 'general', message: 'All data and information are updated real time and live' },
-      ],
+      staffName: '', // simplified staff namexw
       isSeatingPlanOpen: false, // New state to track popup visibility
       isViewOnly: false, // Track if seating plan is in view-only mode
-      availabilityData: {
-        totalSeats: 0,
-        available: 0,
-        reserved: 0,
-        locations: {}
-      },
       isLoading: true,
       error: null,
       records: 0,
@@ -193,9 +176,9 @@ class SeatReservationPanel extends Component {
         }
       }
 
-      // Generate all seat IDs (e.g. C01, C02, ..., M25)
+      // Generate all seat IDs (e.g. C01, C02, ..., Y25)
       const allSeatRows = [
-        'C','D','E','F','G','H','I','J','K','L','M'
+        'C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y'
       ];
       const allSeatIds = [];
       allSeatRows.forEach(row => {
@@ -241,9 +224,9 @@ class SeatReservationPanel extends Component {
 
   // Process API data into the required format
   processAvailabilityData = (records) => {
-    // Generate all seat IDs (e.g. C01, C02, ..., M25)
+    // Generate all seat IDs (e.g. C01, C02, ..., L25)
     const allSeatRows = [
-      'C','D','E','F','G','H','I','J','K','L','M'
+      'C','D','E','F','G','H','I','J','K','L'
     ];
     const allSeatIds = [];
     allSeatRows.forEach(row => {
@@ -640,12 +623,6 @@ class SeatReservationPanel extends Component {
                           selectedSeats={this.state.selectedSeats}
                           viewOnly={isViewOnly} // Use dynamic view-only prop
                         />
-                        {/* Debug info */}
-                        <div style={{background: 'yellow', padding: '10px', margin: '10px'}}>
-                          <strong>Debug - Reserved Seats:</strong><br/>
-                          Count: {this.state.reservedSeats?.length || 0}<br/>
-                          Seats: {JSON.stringify(this.state.reservedSeats)}
-                        </div>
                       </div>
                     </div>
                   </div>
