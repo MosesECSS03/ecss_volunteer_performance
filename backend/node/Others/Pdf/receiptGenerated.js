@@ -150,15 +150,17 @@ class ReceiptGenerator
        .text(`Ticket Price:`, 100, 400);
       // With this conditional logic:
       doc.fontSize(15).font('Arial Bold').fillColor('black');
-      if (record.price != "0") {
-        doc.text(`$35`, 185, 400);
-      } else {
-        doc.text(`Complimentary`, 185, 400);
-      }
-      
-      // Generate QR code for this specific seat number
+      doc.text(`$35`, 185, 400);
+      // Generate QR code with booking details as JSON
       try {
-        const qrCodeData = await QRCode.toDataURL(seatNumber, {
+        // Create JSON data for QR code containing booking details and seat number
+        const qrData = {
+          bookingNumber: record.bookingNo,
+          bookingReference: record.paymentRef,
+          seatNumber: seatNumber
+        };
+        
+        const qrCodeData = await QRCode.toDataURL(JSON.stringify(qrData), {
           width: 150,
           margin: 2,
           color: {

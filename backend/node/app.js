@@ -10,6 +10,7 @@ var app = express(); // Initialize the Express app
 //Router
 var ticketSalesRouter = require('./routes/ticketSales');
 var notificationsRouter = require('./routes/notifications');
+var scannedRouter = require('./routes/scanned');
 
 app.use(cors()); // Enable CORS
 app.use(logger('dev')); // HTTP request logger
@@ -35,6 +36,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/ticketSales', ticketSalesRouter);
 app.use('/notifications', notificationsRouter);
+app.use('/scanned', scannedRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

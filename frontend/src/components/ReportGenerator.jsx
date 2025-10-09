@@ -15,7 +15,6 @@ class ReportGenerator extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      locations: [],
       records: [],
       allReservedSeats: [],
     };
@@ -25,16 +24,6 @@ class ReportGenerator extends Component {
     this.fetchRecords();
   }
 
-  handleLocationToggle = (location) => {
-    this.setState(prevState => {
-      if (prevState.locations.includes(location)) {
-        return { locations: prevState.locations.filter(l => l !== location) };
-      } else {
-        return { locations: [...prevState.locations, location] };
-      }
-    });
-  };
-
   fetchRecords = async () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
@@ -42,18 +31,10 @@ class ReportGenerator extends Component {
       const allReservedSeats = records.flatMap(record =>
         record.seats.flatMap(seatStr => this.expandSeatRange ? this.expandSeatRange(seatStr) : seatStr)
       );
-      // Get all unique locations from records
-      const locations = Array.from(new Set(records.map(r => r.location).filter(Boolean)));
-      this.setState({ records, allReservedSeats, locations });
+      this.setState({ records, allReservedSeats });
     } catch (error) {
       console.error("Error fetching ticket sales:", error);
     }
-  };
-
-  getAllLocations = () => {
-    const { records } = this.state;
-    // Get unique locations from records
-    return Array.from(new Set(records.map(r => r.location).filter(Boolean)));
   };
 
   handleGeneratePDF = () => {
@@ -73,26 +54,17 @@ class ReportGenerator extends Component {
   };
 
   handleGenerateExcel = () => {
-    const { locations, records } = this.state;
-    // If no locations selected, export all; else filter by selected locations
-    const filteredRecords = locations.length === 0
-      ? records
-      : records.filter(r => locations.includes(r.location));
+    const { records } = this.state;
+    const filteredRecords = records;
     
      console.log('Filtered Records:', filteredRecords);
 
-    // Export all columns
+    // Export essential columns only
     const exportRows = filteredRecords.map((row, index) => ({
       id: index + 1,
       name: row.name,
       staffName: row.staffName,
-      location: row.location,
-      price: typeof row.price === 'number'
-        ? `$${row.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : row.price,
-      paymentType: row.paymentType,
       paymentRef: row.paymentRef,
-      selectedSeatsCount: row.selectedSeatsCount,
       bookingNo: row.bookingNo,
       seats: Array.isArray(row.seats) ? row.seats.join(', ') : String(row.seats),
       bookedAt: row.time
@@ -103,11 +75,7 @@ class ReportGenerator extends Component {
       '#',
       'Name',
       'Staff',
-      'Location',
-      'Donation Amount',
-      'Payment Type',
-      'Payment Ref',
-      'No. of Seats',
+      'Contact Number',
       'Booking No',
       'Seats',
       'Booked At'
@@ -118,11 +86,7 @@ class ReportGenerator extends Component {
       'id',
       'name',
       'staffName',
-      'location',
-      'price',
-      'paymentType',
       'paymentRef',
-      'selectedSeatsCount',
       'bookingNo',
       'seats',
       'bookedAt'
@@ -160,11 +124,7 @@ class ReportGenerator extends Component {
 };
 
   render() {
-    const { locations, records } = this.state;
-    const allLocations = this.getAllLocations();
-    const filteredRecords = locations.length === 0
-      ? records
-      : records.filter(r => locations.includes(r.location));
+    const { records } = this.state;
 
     return (
       <div className="report-generator">
@@ -179,28 +139,9 @@ class ReportGenerator extends Component {
         </h2>
         <div className="report-options">
           <div className="option-group">
-            <h3>Locations</h3>
-            <div className="checkbox-group">
-              {allLocations.length === 0 ? (
-                <div style={{ color: '#888', fontStyle: 'italic' }}>
-                  No locations available.
-                </div>
-              ) : (
-                allLocations.map(location => (
-                  <label key={location}>
-                    <input 
-                      type="checkbox"
-                      checked={locations.includes(location)}
-                      onChange={() => this.handleLocationToggle(location)}
-                    />
-                    {location}
-                  </label>
-                ))
-              )}
-            </div>
             <div className="small-report-actions">
               {/*<button onClick={this.handleGeneratePDF} className="small-btn red-btn">Generate PDF</button>*/}
-              <button onClick={this.handleGenerateExcel} className="small-btn blue-btn">Generate Excel</button>
+              <button onClick={this.handleGenerateExcel} className="small-btn blue-btn">Export Excel</button>
             </div>
           </div>
         </div>

@@ -51,18 +51,15 @@ router.post('/', async function(req, res, next)
       console.log("Received records:", records);
 
       records.forEach(record => {
-        const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
+        const key = `${record.name}|${record.location}|${record.time}|${record.bookingNo}`;
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
             staffName: record.staffName,
             location: record.location,
-            price: record.price,
             time: record.time,
-            paymentType: record.paymentType,
-            paymentRef: record.paymentRef,
-            selectedSeatsCount: record.selectedSeatsCount,
             bookingNo: record.bookingNo,
+            paymentRef: record.paymentRef,
             seats: []
           };
         }
@@ -79,13 +76,10 @@ router.post('/', async function(req, res, next)
         name: group.name,
         staffName: group.staffName,
         location: group.location,
-        price: group.price,
         time: group.time,
-        paymentType: group.paymentType,
-        paymentRef: group.paymentRef,
-        selectedSeatsCount: group.selectedSeatsCount,
         bookingNo: group.bookingNo,
-        seats: seatsToRangesByRow(group.seats)  // returns array of seat ranges per row
+        paymentRef: group.paymentRef,
+        seats: seatsToRangesByRow(group.seats)
       }));
 
       // Instantiate controller and save
@@ -143,18 +137,15 @@ router.post('/', async function(req, res, next)
       console.log("Received records for PDF generation:", records);
 
       records.forEach(record => {
-        const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
+        const key = `${record.name}|${record.location}|${record.time}|${record.bookingNo}`;
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
             staffName: record.staffName,
             location: record.location,
-            price: record.price,
             time: record.time,
-            paymentType: record.paymentType,
-            paymentRef: record.paymentRef,
-            selectedSeatsCount: record.selectedSeatsCount,
             bookingNo: record.bookingNo,
+            paymentRef: record.paymentRef,
             seats: []
           };
         }
@@ -171,12 +162,9 @@ router.post('/', async function(req, res, next)
         name: group.name,
         staffName: group.staffName,
         location: group.location,
-        price: group.price,
         time: group.time,
-        paymentType: group.paymentType,
-        paymentRef: group.paymentRef,
-        selectedSeatsCount: group.selectedSeatsCount,
         bookingNo: group.bookingNo,
+        paymentRef: group.paymentRef,
         seats: seatsToRangesByRow(group.seats)
       }));
 
@@ -244,17 +232,13 @@ router.post('/', async function(req, res, next)
       console.log("Received request for PDF generation:", req.body, records);
 
       records.forEach(record => {
-        const key = `${record.name}|${record.staffName}|${record.location}|${record.price}|${record.time}|${record.paymentType}|${record.paymentRef}|${record.selectedSeatsCount}|${record.bookingNo}`;
+        const key = `${record.name}|${record.location}|${record.time}|${record.bookingNo}`;
         if (!grouped[key]) {
           grouped[key] = {
             name: record.name,
             staffName: record.staffName,
             location: record.location,
-            price: record.price,
             time: record.time,
-            paymentType: record.paymentType,
-            paymentRef: record.paymentRef,
-            selectedSeatsCount: record.selectedSeatsCount,
             bookingNo: record.bookingNo,
             seats: []
           };
@@ -290,11 +274,7 @@ router.post('/', async function(req, res, next)
         name: group.name,
         staffName: group.staffName,
         location: group.location,
-        price: group.price,
         time: group.time,
-        paymentType: group.paymentType,
-        paymentRef: group.paymentRef,
-        selectedSeatsCount: group.selectedSeatsCount,
         bookingNo: group.bookingNo,
         seats: seatsToRangesByRow(group.seats)
       }));
@@ -360,15 +340,22 @@ router.post('/', async function(req, res, next)
       // Instantiate controller and retrieve records
       var controller = new TicketSalesController();
       var result = await controller.getSalesRecords();
+      
+      console.log("Controller result:", result);
+      console.log("Result structure:", JSON.stringify(result, null, 2));
 
       // Emit all records to clients via WebSocket
-      if (io && result && result.length > 0) {
+      if (io && result && result.data && result.data.length > 0) {
+        console.log("Emitting to socket - data length:", result.data.length);
         io.emit('data-retrieve', {
           message: 'Data-Retrieve successfully',
-          allReservations: result
+          allReservations: result.data
         });
+      } else {
+        console.log("Not emitting to socket - no data or no io");
       }
 
+      console.log("Sending response:", { result });
       return res.json({ result });
     }
   } 

@@ -62,16 +62,11 @@ class ReservationTable extends Component {
       : records.filter(r => r.location === location);
     const rows = groupRecords(filteredRecords);
 
-    // Export all columns
+    // Export essential columns only
     const exportRows = rows.map(row => ({
       id: row.id,
       name: row.name,
       staffName: row.staffName,
-      location: row.location,
-      price: typeof row.price === 'number'
-        ? `$${row.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : row.price,
-      paymentType: row.paymentType,
       paymentRef: row.paymentRef,
       selectedSeatsCount: row.selectedSeatsCount,
       bookingNo: row.bookingNo,
@@ -84,10 +79,7 @@ class ReservationTable extends Component {
       '#',
       'Name',
       'Staff',
-      'Location',
-      'Donation Amount',
-      'Payment Type',
-      'Payment Ref',
+      'Contact Number',
       'No. of Seats',
       'Booking No',
       'Seats',
@@ -99,9 +91,6 @@ class ReservationTable extends Component {
       'id',
       'name',
       'staffName',
-      'location',
-      'price',
-      'paymentType',
       'paymentRef',
       'selectedSeatsCount',
       'bookingNo',

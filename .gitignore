@@ -1,1 +1,4 @@
 node_modules
+
+# Ignore scanned tickets data file to prevent overwriting on GitHub
+# backend/node/Others/scannedTickets.json

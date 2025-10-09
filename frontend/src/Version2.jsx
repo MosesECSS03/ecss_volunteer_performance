@@ -22,7 +22,8 @@ class Version2 extends Component {
       activeTab: 'reservation',
       aiSuggestions: [],
       notifications: [],
-      isLoading: true
+      isLoading: true,
+      showSeatingPlanModal: false
     };
     
     this.socket = null;
@@ -33,17 +34,32 @@ class Version2 extends Component {
     // Initial data fetch
     this.fetchInitialData();
 
-    // Connect to socket
-    this.socket = io(API_BASE_URL);
+    // Connect to socket with better configuration
+    this.socket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+    
+    this.socket.on('connect', () => {
+      console.log('Version2 Socket connected successfully:', this.socket.id);
+    });
+    
+    this.socket.on('connect_error', (error) => {
+      console.error('Version2 Socket connection error:', error);
+    });
  
-     this.socket.on('reservation-updated', (data) => {
-       console.log("Socket event received", data);
-          this.fetchInitialData();
-     });
+    this.socket.on('reservation-updated', (data) => {
+      console.log("Version2 Socket event received", data);
+      this.fetchInitialData();
+    });
   }
   
   componentWillUnmount() {
     if (this.socket) {
+      this.socket.off('reservation-updated');
+      this.socket.off('connect');
+      this.socket.off('connect_error');
       this.socket.disconnect();
     }
   }
@@ -63,7 +79,8 @@ class Version2 extends Component {
   // Data fetching
   fetchInitialData = async () => {
     try {
-      // Fetch initial data implementation
+      // SeatReservationPanel handles its own data fetching
+      // No need to fetch reserved seats here
       this.setState({ isLoading: false });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -76,8 +93,23 @@ class Version2 extends Component {
     this.setState({ activeTab: tab });
   }
 
+  // Modal control methods
+  openSeatingPlanModal = () => {
+    console.log('Opening seating plan modal...');
+    this.setState({ showSeatingPlanModal: true }, () => {
+      console.log('Modal state after opening:', this.state.showSeatingPlanModal);
+    });
+  }
+
+  closeSeatingPlanModal = () => {
+    console.log('Closing seating plan modal...');
+    this.setState({ showSeatingPlanModal: false }, () => {
+      console.log('Modal state after closing:', this.state.showSeatingPlanModal);
+    });
+  }
+
   render() {
-    const { seats, reservedSeats, activeTab, isLoading } = this.state;
+    const { seats, reservedSeats, activeTab, isLoading, showSeatingPlanModal } = this.state;
     
     if (isLoading) {
       return <div>Loading dashboard...</div>;
@@ -85,29 +117,32 @@ class Version2 extends Component {
 
     return (
       <div className="smart-dashboard-container">
-        <h1>AI Seat Reservation Dashboard</h1>
+        <h1>ECSS Musical Concert 2025 Seat Reservation Dashboard</h1>
         
         <div className="dashboard-navigation">
           <button 
             className={activeTab === 'reservation' ? 'active' : ''} 
             onClick={() => this.handleTabChange('reservation')}
           >
-            Seat Reservation
+            Seat Reservation Form
+          </button>
+          <button 
+            className="seating-plan-modal-btn"
+            onClick={this.openSeatingPlanModal}
+          >
+            🎭 View Seating Plan
           </button>
           <button 
             className={activeTab === 'reports' ? 'active' : ''} 
             onClick={() => this.handleTabChange('reports')}
           >
-            Reports
+            📊 Search & Generate Reports
           </button>
-        </div>
-        
-        <div className="dashboard-content">
+        </div>        <div className="dashboard-content">
           {activeTab === 'reservation' && (
             <div className="reservation-section">
                 <SeatReservationPanel 
                   seats={seats}
-                  reservedSeats={reservedSeats}
                   socket={this.socket}
                 />
             </div>
@@ -118,8 +153,28 @@ class Version2 extends Component {
               <ReportGenerator />
             </div>
           )}
-          
         </div>
+
+        {/* Seating Plan Modal */}
+        {this.state.showSeatingPlanModal && (
+          <div className="modal-overlay" onClick={this.closeSeatingPlanModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Seating Plan</h2>
+                <button className="modal-close-btn" onClick={this.closeSeatingPlanModal}>
+                  ×
+                </button>
+              </div>
+              <div className="modal-body">
+                <SeatReservationPanel 
+                  seats={seats}
+                  socket={this.socket}
+                  viewOnlyMode={true}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

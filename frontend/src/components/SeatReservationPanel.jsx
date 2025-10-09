@@ -12,34 +12,37 @@ const API_BASE_URL =
     ? "http://localhost:3001"
     : "https://ecss-performance-night-2025.azurewebsites.net";
 
-const STAFF_BY_LOCATION = {
-  "CT Hub": ["Rosalind Ong", "Lam Lee Chin", "Yeo Lih Yong", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "Eileen Tan"],
-  "Tampines North Community Club": ["Allison Teo", "Eileen Tan", "He Xiuxiang"],
-  "Pasir Ris West Wellness Centre": ["Jeniffer Lim", "Rebecca Wang", "Phang Hui San", "Chua Bee Bee", "He Xiuxiang"]
-};
-
 // Expand a seat range string like "C01 - C03, D01, D03 - D05" to ["C01", "C02", "C03", "D01", "D03", "D04", "D05"]
 function expandSeatRanges(seatRanges) {
+  console.log("expandSeatRanges input:", seatRanges);
   const result = [];
-  seatRanges.forEach(range => {
+  seatRanges.forEach((range, index) => {
+    console.log(`Processing range ${index}: "${range}"`);
     range.split(',').forEach(part => {
       const trimmed = part.trim();
+      console.log(`Processing part: "${trimmed}"`);
       if (trimmed.includes('-')) {
         const [start, end] = trimmed.split('-').map(s => s.trim());
+        console.log(`Found range: "${start}" to "${end}"`);
         if (start[0] === end[0]) {
           // Same row
           const row = start[0];
           const startNum = parseInt(start.slice(1), 10);
           const endNum = parseInt(end.slice(1), 10);
+          console.log(`Expanding row ${row} from ${startNum} to ${endNum}`);
           for (let i = startNum; i <= endNum; i++) {
-            result.push(`${row}${i.toString().padStart(2, '0')}`);
+            const seat = `${row}${i.toString().padStart(2, '0')}`;
+            console.log(`Adding seat: ${seat}`);
+            result.push(seat);
           }
         }
       } else if (trimmed) {
+        console.log(`Adding individual seat: ${trimmed}`);
         result.push(trimmed);
       }
     });
   });
+  console.log("expandSeatRanges result:", result);
   return result;
 }
 
@@ -82,31 +85,13 @@ class SeatReservationPanel extends Component {
       selectedSeatsCount: "", // <-- Add this line
       cfmSelectedSeatsCount: 0, // <-- Add this line
       locationFilter: 'all',
-      location: '', // add this
-      notes: [
-        { id: 1, type: 'info', message: 'Seat can be auto or manual selected' },
-        { id: 2, type: 'info', message: 'Press the button to view the seating plan popup' },
-        { id: 3, type: 'info', message: 'Click on the "Get Next Seats" to auto-select next available seats' },
-        { id: 4, type: 'info', message: 'Submit the form to book the seat(s)' },
-        { id: 5, type: 'warning', message: 'Submit the form to book the seat(s)' },
-        { id: 6, type: 'warning', message: 'Each booking transaction must be at $35.' },
-        { id: 7, type: 'warning', message: 'VIP seats require special access' },
-        { id: 8, type: 'general', message: 'Do not need to worry if there is an overlapping of reserved and selected seats.' },
-        { id: 9, type: 'general', message: 'All data and information are updated real time and live' },
-      ],
+      staffName: '', // simplified staff namexw
       isSeatingPlanOpen: false, // New state to track popup visibility
-      availabilityData: {
-        totalSeats: 0,
-        available: 0,
-        reserved: 0,
-        locations: {}
-      },
+      isViewOnly: false, // Track if seating plan is in view-only mode
       isLoading: true,
       error: null,
       records: 0,
       notifications: [], // <-- Add this line
-      staffName: '', // <-- Add this line
-      price: 0, // <-- Add this line
     };
 
     // Add this in your constructor
@@ -116,13 +101,26 @@ class SeatReservationPanel extends Component {
   // Fetch data when component mounts
   componentDidMount() {
     this.fetchAvailabilityData();
-    this.fetchNotifications(); // <-- Add this line
+    this.fetchNotifications();
 
-    this.socket = io(API_BASE_URL);
+    this.socket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+    
+    this.socket.on('connect', () => {
+      console.log('Socket connected successfully:', this.socket.id);
+    });
+    
+    this.socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+    
     this.socket.on('reservation-updated', (data) => {
       console.log("Socket event received123", data);
       this.fetchAvailabilityData();
-      this.fetchNotifications(); // Optionally refresh notifications on update
+      this.fetchNotifications();
     });
 
     window.addEventListener('onesignal-notification', (e) => {
@@ -131,19 +129,56 @@ class SeatReservationPanel extends Component {
     });
   }
 
+  componentWillUnmount() {
+    if (this.socket) {
+      this.socket.off('reservation-updated');
+      this.socket.off('connect');
+      this.socket.off('connect_error');
+      this.socket.disconnect();
+    }
+    window.removeEventListener('onesignal-notification', this.addNotification);
+  }
+
+
   // Method to fetch availability data from API
   fetchAvailabilityData = async () => {
     try {
+      console.log("Starting fetchAvailabilityData...");
       const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
-      const records = response.data.result.data;
-      console.log("Records fetched:", records);
+      console.log("Full API response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response.data.result:", response.data.result);
+      
+      // Based on the backend code: return res.json({ result });
+      // where result = { success: true, data: records }
+      // So the structure is response.data.result.data
+      let records = response.data.result.data;
+      
+      console.log("Final records:", records);
+      console.log("Records type:", typeof records);
+      console.log("Records is array:", Array.isArray(records));
+      
+      if (!records || !Array.isArray(records)) {
+        console.error("No valid records found in API response");
+        console.log("Attempting alternative data access...");
+        // Try alternative access patterns
+        if (response.data.result && Array.isArray(response.data.result)) {
+          records = response.data.result;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          records = response.data.data;
+        } else {
+          console.error("Could not find records in any expected location");
+          this.setState({ 
+            isLoading: false,
+            error: "No data found" 
+          });
+          return;
+        }
+      }
 
-      // Process the records to calculate availability
-      const availabilityData = this.processAvailabilityData(records);
-
-      // Generate all seat IDs (e.g. C01, C02, ..., M25)
+      // Generate all seat IDs (e.g. C01, C02, ..., Y25)
       const allSeatRows = [
-        'C','D','E','F','G','H','I','J','K','L','M'
+        'C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y'
       ];
       const allSeatIds = [];
       allSeatRows.forEach(row => {
@@ -154,26 +189,30 @@ class SeatReservationPanel extends Component {
 
       // Find reserved seats from records
       const reservedSeats = new Set();
-      records.forEach(record => {
+      records.forEach((record, index) => {
+        console.log(`Processing record ${index}:`, record);
+        console.log(`Record ${index} seats:`, record.seats);
+        
         if (record.seats && Array.isArray(record.seats)) {
+          console.log(`Expanding seat ranges for record ${index}:`, record.seats);
           // Expand seat ranges if needed
           const expanded = expandSeatRanges(record.seats);
-          expanded.forEach(seat => reservedSeats.add(seat));
+          console.log(`Expanded seats for record ${index}:`, expanded);
+          expanded.forEach(seat => {
+            console.log(`Adding seat to reserved set: ${seat}`);
+            reservedSeats.add(seat);
+          });
         }
       });
-      console.log("Reserved seats:", reservedSeats);
-
-      // Compute available seats
-      const availableSeats = allSeatIds.filter(seatId => !reservedSeats.has(seatId));
-
+      console.log("All reserved seats (Set):", reservedSeats);
+      console.log("Reserved seats (Array):", Array.from(reservedSeats));
 
       this.setState({
         records: records.length,
-        availabilityData,
-        availableSeats, // <-- Add this line
-        reservedSeats: Array.from(reservedSeats), // <-- add this line
+        reservedSeats: Array.from(reservedSeats),
         isLoading: false
       });
+    
     } catch (error) {
       console.error("Error fetching availability data:", error);
       this.setState({
@@ -185,9 +224,9 @@ class SeatReservationPanel extends Component {
 
   // Process API data into the required format
   processAvailabilityData = (records) => {
-    // Generate all seat IDs (e.g. C01, C02, ..., M25)
+    // Generate all seat IDs (e.g. C01, C02, ..., L25)
     const allSeatRows = [
-      'C','D','E','F','G','H','I','J','K','L','M'
+      'C','D','E','F','G','H','I','J','K','L'
     ];
     const allSeatIds = [];
     allSeatRows.forEach(row => {
@@ -210,43 +249,12 @@ class SeatReservationPanel extends Component {
     const booked = reservedSeats.size;
     const available = totalSeats - booked;
 
-    // Calculate per-location availability
-    const locations = {
-      'CT Hub': { total: 125, available: 125 },
-      'Tampines North Community Club': { total: 100, available: 100 },
-      'Pasir Ris West Wellness Centre': { total: 50, available: 50 }
-    };
-
-    reservedSeats.forEach(seatId => {
-      const loc = this.determineLocationFromSeat(seatId);
-      if (locations[loc]) {
-        locations[loc].available -= 1;
-      }
-    });
-
     return {
       totalSeats,
       available,
       reserved: booked,
-      locations
+      locations: {} // Default empty locations object
     };
-  };
-  
-  // Helper method to determine location from seat ID (if needed)
-  determineLocationFromSeat = (seatId) => {
-    // Example logic - should be adapted to your actual seat ID format
-    const row = seatId.charAt(0);
-    
-    if (['C', 'D', 'I', 'J', 'M'].includes(row)) {
-      return 'CT Hub';
-    } else if (['E', 'F', 'K', 'L'].includes(row)) {
-      return 'Tampines North Community Club';
-    } else if (['G', 'H'].includes(row)) {
-      return 'Pasir Ris West Wellness Centre';
-    }
-    
-    // Default if can't determine
-    return 'CT Hub';
   };
 
   handleSeatSelect = (seatId) => {
@@ -288,16 +296,21 @@ class SeatReservationPanel extends Component {
     this.setState({ selectedSeats: [] });
   }
 
-  // New method to toggle the seating plan popup
-  toggleSeatingPlan = (selectedSeats = null) => {
-    // If selectedSeats is provided, update state
-    console.log("Selected seats:", selectedSeats);
-    if (selectedSeats) {
-      this.handleSeatsSelected(selectedSeats);
-    }
+  // Method to toggle the seating plan popup in VIEW-ONLY mode (🎭View Seating Plan button)
+  toggleSeatingPlan = () => {
     this.setState(prevState => ({
-      isSeatingPlanOpen: !prevState.isSeatingPlanOpen
+      isSeatingPlanOpen: !prevState.isSeatingPlanOpen,
+      isViewOnly: true // Always view-only for this button
     }));
+  }
+
+  // Method to open seating plan in INTERACTIVE mode (for Get Seat(s) button)
+  openSeatingPlan = () => {
+    // Open in interactive mode for seat selection
+    this.setState({ 
+      isSeatingPlanOpen: true,
+      isViewOnly: false // Interactive mode for seat selection
+    });
   }
 
   // New method to toggle the registration form
@@ -320,17 +333,8 @@ class SeatReservationPanel extends Component {
       const notificationDate = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
       const time = notificationDate;
   
-      // Ensure price is always correct and included
-      const price = this.state.price;
-  
-      // Allow price of 0 (free booking) but require minimum $35 for paid bookings
-      if (isNaN(price) || (price > 0 && price < 35)) {
-        alert("Total Price must be at least $35.00");
-        return;
-      }
-  
-      // Add bookingNo, time, and price to formData
-      const submission = { ...formData, bookingNo, time, price };
+      // Add bookingNo and time to formData
+      const submission = { ...formData, bookingNo, time };
       console.log("Registration submitted:", submission);
   
       // --- Check for overlapping reserved seats before proceeding ---
@@ -467,14 +471,12 @@ class SeatReservationPanel extends Component {
   // Handler for seat count change
   handleSelectedSeatsCountChange = (count) => {
     const numCount = Number(count);
-    const price = numCount * 35;
-    console.log("Selected seats count changed:", count, price);
+    console.log("Selected seats count changed:", count);
     
     // If count is 0 or empty, clear selected seats as well
     if (!count || count === '' || numCount <= 0) {
       this.setState({ 
         selectedSeatsCount: count, 
-        price: 0,
         selectedSeats: [] // Clear selected seats when count is 0/empty
       });
       
@@ -482,7 +484,7 @@ class SeatReservationPanel extends Component {
       // This ensures name and paymentRef are cleared immediately
       this.forceUpdate();
     } else {
-      this.setState({ selectedSeatsCount: count, price });
+      this.setState({ selectedSeatsCount: count });
     }
   };
 
@@ -496,15 +498,13 @@ class SeatReservationPanel extends Component {
       // User is selecting seats - update everything
       this.setState({
         selectedSeats,
-        selectedSeatsCount,
-        price: selectedSeatsCount * 35
+        selectedSeatsCount
       });
     } else {
       // User is clearing selection - clear everything including the seat count field
       this.setState({
         selectedSeats,
-        selectedSeatsCount: '', // Clear the seat count field to make form blank
-        price: 0
+        selectedSeatsCount: '' // Clear the seat count field to make form blank
       });
     }
     console.log("Seats selected from SeatingPlan:", selectedSeats);
@@ -523,8 +523,7 @@ class SeatReservationPanel extends Component {
     this.setState(
       { 
         cfmSelectedSeatsCount: count,
-        isSeatingPlanOpen: true,
-        price: count * 35 // set total price here
+        isSeatingPlanOpen: true
       },
       () => {
         // After opening the modal, trigger auto-select in SeatingPlan only if count > 0
@@ -535,20 +534,6 @@ class SeatReservationPanel extends Component {
     );
   };
   
-  handleLocationChange = (e) => {
-    const location = e.target.value;
-    // Clear staffName when location changes - user should select from dropdown
-    this.setState({ location, staffName: '' });
-  };
-
-  handleStaffNameChange = (staffName) => {
-    this.setState({ staffName });
-  };
-
-  handleStaffDropdownChange = (e) => {
-    this.props.onStaffNameChange(e.target.value);
-  };
-
   addNotification = (notification) => {
   console.log("Adding notification:", notification);
     this.setState(prevState => ({
@@ -557,10 +542,6 @@ class SeatReservationPanel extends Component {
         { id: Date.now(), ...notification }
       ]
     }));
-  };
-
-  handlePriceChange = (price) => {
-    this.setState({ price });
   };
 
   // New method to fetch notifications from the server
@@ -588,255 +569,79 @@ class SeatReservationPanel extends Component {
       notifications, 
       isSeatingPlanOpen, 
       isRegistrationOpen,
+      isViewOnly,
       availabilityData,
       isLoading,
       error,
       selectedSeatsCount
     } = this.state;
     
-    // AI insights (mock data)
-    const aiInsights = [
-      { id: 1, message: "Based on current trends, CT Hub will be fully booked in the next hour." },
-      { id: 2, message: "Consider opening additional seats in Pasir Ris to meet demand." },
-      { id: 3, message: "Peak reservation times are approaching. Prepare for increased activity." }
-    ];
-    
     return (
-      <div className="seat-reservation-panel">
-        <h2>Seat Reservation</h2>
-        
         <div className="reservation-layout">
-          {/* Left Column - Button to open Seating Plan and Registration Form */}
+          {/* Left Column - Registration Form and optional View Seating Plan button */}
           <div className="seating-plan-column">
-            <button 
-              className="view-seating-plan-btn"
-              onClick={this.toggleSeatingPlan}
-            >
-              <span className="btn-icon">🎭</span>
-              View Seating Plan
-            </button>
 
-            {/* Seating Plan Popup */}
-            {isSeatingPlanOpen && (
-              <div className="seating-plan-modal-overlay">
-                <div className="seating-plan-modal">
-                  <div className="seating-plan-modal-header">
-                    <h3>Seating Plan</h3>
-                    <button 
-                      className="close-modal-btn"
-                      onClick={() => {
-                        // Get selected seats from SeatingPlan via ref
-                        const selectedSeats = this.seatingPlanRef.current
-                          ? this.seatingPlanRef.current.getSelectedSeats()
-                          : [];
-                        this.toggleSeatingPlan(selectedSeats);
-                      }}
-                    >
-                      &times;
-                    </button>
-                  </div>
-                  <div className="seating-plan-modal-body">
-                    <SeatingPlan
-                      ref={this.seatingPlanRef}
-                      availableSeats={this.state.availableSeats}
-                      reservedSeats={this.state.reservedSeats} // <-- pass here
-                      noOfReservedSeats={this.state.selectedSeatsCount}
-                      onSeatSelect={this.handleSeatSelect}
-                      onClearSelection={this.handleClearSelection}
-                      location={this.state.location}
-                      selectedSeats={this.state.selectedSeats}
-                    />
-                  </div>
-                </div>
+            {/* If in viewOnlyMode, show seating plan directly */}
+            {this.props.viewOnlyMode ? (
+              <div className="view-only-seating-plan">
+                <SeatingPlan
+                  ref={this.seatingPlanRef}
+                  availableSeats={this.state.availableSeats}
+                  reservedSeats={this.state.reservedSeats}
+                  noOfReservedSeats={this.state.selectedSeatsCount}
+                  onSeatsSelected={null} // Disable selection in view-only mode
+                  onClearSelection={null} // Disable clearing in view-only mode
+                  selectedSeats={[]} // No selected seats in view-only mode
+                  viewOnly={true} // Always view-only
+                />
               </div>
-            )}
-
-            {/* Registration Form (inline, not popup) */}
-            <div className="registration-form-section">
-              <RegistrationForm
-                selectedSeatsCount={this.state.selectedSeatsCount}
-                reservedSeats={this.state.selectedSeats}
-                onSubmit={this.handleRegistrationSubmit}
-                onAutoSelectSeats={this.handleAutoSelectSeats}
-                onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
-                location={this.state.location}
-                onLocationChange={this.handleLocationChange}
-                staffName={this.state.staffName}
-                staffDropdownOptions={
-                  this.state.location === "Pasir Ris West Wellness Centre"
-                    ? STAFF_BY_LOCATION["Pasir Ris West Wellness Centre"]
-                    : this.state.location === "CT Hub"
-                    ? STAFF_BY_LOCATION["CT Hub"]
-                    : this.state.location === "Tampines North Community Club"
-                    ? STAFF_BY_LOCATION["Tampines North Community Club"]
-                    : []
-                }
-                onStaffNameChange={this.handleStaffNameChange}
-                price={this.state.price} // <-- pass price here
-                onPriceChange={this.handlePriceChange}
-              />
-            </div>
-          </div>
-          
-          {/* Right Column - Live Availability, AI Insights, Notifications */}
-          <div className="info-column">
-            {/* Live Availability Section */}
-            <div className="info-panel live-availability">
-              <h3>Live Availability</h3>
-              
-              {isLoading ? (
-                <div className="loading-indicator">Loading availability data...</div>
-              ) : error ? (
-                <div className="error-message">{error}</div>
-              ) : (
-                <div className="availability-overview">
-                  {/* Summary metrics section */}
-                  <div className="availability-summary">
-                    <div className="availability-metric">
-                      <span className="metric-label">Total Seats:</span>
-                      <span className="metric-value" style={{ fontWeight: 'bold', color: '#ffffff'}}>{availabilityData.totalSeats}</span>
-                    </div>
-                    <div className="availability-metric">
-                      <span className="metric-label">Available:</span>
-                      <span className="metric-value available">{availabilityData.available}</span>
-                    </div>
-                    <div className="availability-metric">
-                      <span className="metric-label">Booked:</span>
-                      <span className="metric-value reserved">{availabilityData.reserved}</span>
-                    </div>
-                  </div>
-                  
-                  <h4>Location Breakdown</h4>
-                  
-                  {/* Scrollable container for locations */}
-                  <div className="locations-scrollable-container">
-                    {Object.entries(availabilityData.locations).map(([loc, data]) => {
-                      const reservedSeats = data.total - data.available;
-                      const availablePercentage = (data.available / data.total) * 100;
-                      const reservedPercentage = (reservedSeats / data.total) * 100;
-                      
-                      return (
-                        <div key={loc} className="location-availability high-contrast vertical-layout">
-                          {/* SECTION 1: Location name and total */}
-                          <div className="location-section location-header-section">
-                              <span className="location-name">{loc}</span>
-                          </div>
-                          
-                          {/* SECTION 2: Status bars with labels */}
-                          <div className="location-section location-bars-section">
-                            <div className="availability-bar-wrapper">
-                              {/* Available portion */}
-                              <div 
-                                className="availability-bar available-bar" 
-                                style={{ width: `${availablePercentage}%` }}
-                              ></div>
-                              {/* Reserved portion */}
-                              <div 
-                                className="availability-bar reserved-bar" 
-                                style={{ width: `${reservedPercentage}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                          
-                          {/* SECTION 3: Statistics breakdown */}
-                          <div className="location-section location-stats-section">
-                            <div className="stats-grid">
-                              <div className="stats-item">
-                                <span className="stats-label">Total:</span>
-                                <span className="stats-value">{data.total}</span>
-                              </div>
-                              <div className="stats-item">
-                                <span className="stats-label">Available:</span>
-                                <span className="stats-value available">{data.available}</span>
-                              </div>
-                              <div className="stats-item">
-                                <span className="stats-label">Booked:</span>
-                                <span className="stats-value reserved">{reservedSeats}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Notes Section */}
-            <div className="info-panel notes">
-              <h3>Notes</h3>
-              <ul className="notes-list">
-                {this.state.notes.map(note => (
-                  <li key={note.id} className={`note-item ${note.type}`}>
-                    <span className="note-icon">
-                      {note.type === 'info'
-                        ? 'ℹ️'
-                        : note.type === 'warning'
-                        ? '⚠️'
-                        : '📝'}
-                    </span>
-                    <span className="note-message">{note.message}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Notifications Section */}
-           <div className="info-panel notifications">
-              <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                Notifications
-                <button
-                  style={{
-                    fontSize: '1rem',
-                    padding: '4px 12px',
-                    background: '#444',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => this.setState({ notifications: [] })}
-                  disabled={this.state.notifications.length === 0}
-                  title="Clear all notifications"
-                >
-                  Clear
-                </button>
-              </h3>
-              <div className="notifications-list">
-                {this.state.notifications.length === 0 ? (
-                  <div style={{ color: '#888', fontStyle: 'italic', padding: '12px' }}>
-                    No notifications.
-                  </div>
-                ) : (
-                  this.state.notifications.map(notification => (
-                    <div key={notification.id} className={`notification-item ${notification.type}`}>
-                      <div className="notification-header" style={{ fontWeight: 'bold', marginBottom: 2 }}>
-                        <span className="notification-icon">
-                          {notification.type === 'info'
-                            ? 'ℹ️'
-                            : notification.type === 'warning'
-                            ? '⚠️'
-                            : notification.type === 'reservation'
-                            ? '🎟️'
-                            : '📢'}
-                        </span>
-                        <span style={{ marginLeft: 8 }}>
-                          {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}{' '}
-                          {notification.date}
-                        </span>
+            ) : (
+              <>
+                {/* Seating Plan Popup - only show if not in viewOnlyMode */}
+                {isSeatingPlanOpen && (
+                  <div className="seating-plan-modal-overlay">
+                    <div className="seating-plan-modal">
+                      <div className="seating-plan-modal-header">
+                        <h3>Seating Plan</h3>
+                        <button 
+                          className="close-modal-btn"
+                          onClick={() => {
+                            this.setState({ isSeatingPlanOpen: false });
+                          }}
+                        >
+                          &times;
+                        </button>
                       </div>
-                      <div className="notification-message" style={{ marginLeft: 28 }}>
-                        {notification.description || notification.message}
+                      <div className="seating-plan-modal-body">
+                        <SeatingPlan
+                          ref={this.seatingPlanRef}
+                          availableSeats={this.state.availableSeats}
+                          reservedSeats={this.state.reservedSeats} // <-- pass here
+                          noOfReservedSeats={this.state.selectedSeatsCount}
+                          onSeatsSelected={isViewOnly ? null : this.handleSeatsSelected} // Enable/disable based on mode
+                          onClearSelection={isViewOnly ? null : this.handleClearSelection} // Enable/disable based on mode
+                          selectedSeats={this.state.selectedSeats}
+                          viewOnly={isViewOnly} // Use dynamic view-only prop
+                        />
                       </div>
                     </div>
-                  ))
+                  </div>
                 )}
-              </div>
-            </div>
+
+                {/* Registration Form (inline, not popup) - only show if not in viewOnlyMode */}
+                <div className="registration-form-section">
+                  <RegistrationForm
+                    selectedSeatsCount={this.state.selectedSeatsCount}
+                    reservedSeats={this.state.selectedSeats}
+                    onSubmit={this.handleRegistrationSubmit}
+                    onAutoSelectSeats={this.openSeatingPlan}
+                    onSelectedSeatsCountChange={this.handleSelectedSeatsCountChange}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
     );
   }
 }

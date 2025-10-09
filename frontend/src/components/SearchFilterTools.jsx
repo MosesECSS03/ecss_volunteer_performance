@@ -14,8 +14,7 @@ class SearchFilterTools extends Component {
       searchQuery: '',
       searchResults: [],
       isSearching: false,
-      dateFilter: 'all',
-      locationFilter: 'all',
+      paymentMethodFilter: 'all',
       statusFilter: 'all',
       records: [],
       allReservedSeats: [],
@@ -31,8 +30,24 @@ class SearchFilterTools extends Component {
   fetchRecords = async () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/ticketSales`, { purpose: "retrieve" });
-      var records = response.data.result.data;
       console.log("Fetched Records:", response.data);
+      
+      // Handle multiple possible response structures
+      let records = response.data.result?.data;
+      
+      if (!records || !Array.isArray(records)) {
+        // Try alternative access patterns
+        if (response.data.result && Array.isArray(response.data.result)) {
+          records = response.data.result;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          records = response.data.data;
+        } else {
+          console.error("Could not find records in response");
+          records = [];
+        }
+      }
+
+      console.log("Final records:", records);
 
       const allReservedSeats = records.flatMap(record =>
         record.seats && this.expandSeatRange
@@ -43,13 +58,14 @@ class SearchFilterTools extends Component {
       this.setState({ records, allReservedSeats, searchResults: records });
     } catch (error) {
       console.error("Error fetching ticket sales:", error);
+      this.setState({ records: [], allReservedSeats: [], searchResults: [] });
     }
   };
 
-  getAllLocations = () => {
+  getAllPaymentMethods = () => {
     const { records } = this.state;
-    // Get unique locations from records
-    return Array.from(new Set(records.map(r => r.location).filter(Boolean)));
+    // Get unique payment methods from records
+    return Array.from(new Set(records.map(r => r.paymentType).filter(Boolean)));
   };
 
   handleSearchChange = (e) => {
@@ -57,7 +73,7 @@ class SearchFilterTools extends Component {
   }
 
   handleSearch = () => {
-    const { searchQuery, dateFilter, locationFilter, records } = this.state;
+    const { searchQuery, paymentMethodFilter, records } = this.state;
     let results = records;
 
     // Filter by search query (searches all fields)
@@ -70,50 +86,9 @@ class SearchFilterTools extends Component {
       );
     }
 
-    // Filter by date
-    if (dateFilter !== 'all') {
-      const today = new Date();
-      results = results.filter(r => {
-        if (!r.time) return false;
-        // Parse "21/05/2025 01:30:07"
-        const [datePart] = r.time.split(' ');
-        const [day, month, year] = datePart.split('/').map(Number);
-        const recordDate = new Date(year, month - 1, day);
-
-        if (dateFilter === 'today') {
-          return (
-            recordDate.getDate() === today.getDate() &&
-            recordDate.getMonth() === today.getMonth() &&
-            recordDate.getFullYear() === today.getFullYear()
-          );
-        }
-        if (dateFilter === 'yesterday') {
-          const yesterday = new Date(today);
-          yesterday.setDate(today.getDate() - 1);
-          return (
-            recordDate.getDate() === yesterday.getDate() &&
-            recordDate.getMonth() === yesterday.getMonth() &&
-            recordDate.getFullYear() === yesterday.getFullYear()
-          );
-        }
-        if (dateFilter === 'week') {
-          // Get start of week (Sunday)
-          const startOfWeek = new Date(today);
-          startOfWeek.setDate(today.getDate() - today.getDay());
-          startOfWeek.setHours(0, 0, 0, 0);
-          // Get end of week (Saturday)
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-          endOfWeek.setHours(23, 59, 59, 999);
-          return recordDate >= startOfWeek && recordDate <= endOfWeek;
-        }
-        return true;
-      });
-    }
-
-    // Filter by location
-    if (locationFilter !== 'all') {
-      results = results.filter(r => r.location === locationFilter);
+    // Filter by payment method
+    if (paymentMethodFilter !== 'all') {
+      results = results.filter(r => r.paymentType === paymentMethodFilter);
     }
 
     this.setState({ searchResults: results });
@@ -130,12 +105,12 @@ class SearchFilterTools extends Component {
   render() {
     const { 
       searchQuery, searchResults, isSearching,
-      dateFilter, locationFilter, statusFilter,
+      paymentMethodFilter, statusFilter,
       currentPage, resultsPerPage
     } = this.state;
 
-    // Dynamically get all unique locations from records
-    const allLocations = this.getAllLocations();
+    // Dynamically get all unique payment methods from records
+    const allPaymentMethods = this.getAllPaymentMethods();
 
     // Pagination logic
     const indexOfLast = currentPage * resultsPerPage;
@@ -173,27 +148,14 @@ class SearchFilterTools extends Component {
         
         <div className="filters">
           <div className="filter">
-            <label>Date:</label>
+            <label>Payment Method:</label>
             <select 
-              value={dateFilter}
-              onChange={(e) => this.handleFilterChange('dateFilter', e.target.value)}
+              value={paymentMethodFilter}
+              onChange={(e) => this.handleFilterChange('paymentMethodFilter', e.target.value)}
             >
-              <option value="all">All Dates</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="week">This Week</option>
-            </select>
-          </div>
-          
-          <div className="filter">
-            <label>Location:</label>
-            <select 
-              value={locationFilter}
-              onChange={(e) => this.handleFilterChange('locationFilter', e.target.value)}
-            >
-              <option value="all">All Locations</option>
-              {allLocations.map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
+              <option value="all">All Payment Methods</option>
+              {allPaymentMethods.map(method => (
+                <option key={method} value={method}>{method}</option>
               ))}
             </select>
           </div>
@@ -249,21 +211,127 @@ function getLocationColor(location) {
 }
 
 class ExpandableCard extends React.Component {
-  state = { expanded: false };
+  state = { 
+    expanded: false,
+    isGeneratingTicket: false
+  };
+  
   toggleExpand = () => this.setState(s => ({ expanded: !s.expanded }));
+  
+  handleGenerateTicket = async () => {
+    const { result } = this.props;
+    
+    this.setState({ isGeneratingTicket: true });
+    
+    try {
+      console.log('Generating ticket for:', result);
+      
+      // Generate the PDF using the existing backend endpoint
+      const pdfResponse = await axios.post(`${API_BASE_URL}/ticketSales`, { 
+        purpose: "generateWithApp", 
+        records: [result] 
+      });
+
+      console.log("PDF Response:", pdfResponse.data);
+
+      if (pdfResponse.data.success === false) {
+        throw new Error(pdfResponse.data.message || 'Failed to generate ticket');
+      }
+
+      if (pdfResponse.data.isZip && pdfResponse.data.zipBase64) {
+        // Handle ZIP file containing multiple PDFs
+        const base64 = pdfResponse.data.zipBase64;
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/zip' });
+
+        // Create a blob URL and download the ZIP file
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = pdfResponse.data.zipFilename || `${result.bookingNo || 'booking'}_tickets.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the blob URL
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        
+      } else if (pdfResponse.data.receiptPdfBase64) {
+        // Handle single PDF
+        const base64 = pdfResponse.data.receiptPdfBase64;
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        // Create a blob URL and download the PDF
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `${result.bookingNo || 'booking'}_ticket.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Also open in new tab for immediate viewing
+        window.open(blobUrl, '_blank');
+        
+        // Clean up the blob URL
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } else {
+        throw new Error('No PDF data received from server');
+      }
+
+    } catch (error) {
+      console.error('Error generating ticket:', error);
+    } finally {
+      this.setState({ isGeneratingTicket: false });
+    }
+  };
+  
   render() {
     const { result } = this.props;
-    const { expanded } = this.state;
-    const cardBg = getLocationColor(result.location);
-    console.log("Card Background Color:", cardBg);
+    const { expanded, isGeneratingTicket } = this.state;
+    // Override dynamic background with light grey
     return (
-      <div className="professional-card" style={{ background: cardBg }}>
-        <div className="card-header" onClick={this.toggleExpand}>
+      <div 
+        className="professional-card" 
+        style={{ 
+          background: '#f5f5f5',
+          cursor: isGeneratingTicket ? 'wait' : 'pointer',
+          opacity: isGeneratingTicket ? 0.7 : 1,
+          transition: 'opacity 0.3s ease'
+        }}
+        onClick={() => {
+          if (!isGeneratingTicket) {
+            this.handleGenerateTicket();
+          }
+        }}
+        title={isGeneratingTicket ? 'Generating ticket...' : 'Click to generate ticket(s)'}
+      >
+        <div className="card-header">
           <div>
             <h2>{result.name}</h2>
             <span className="card-location">{result.location}</span>
           </div>
-          <button className="expand-btn">{expanded ? '▲' : '▼'}</button>
+          <button 
+            className="expand-btn"
+            onClick={(e) => {
+              e.stopPropagation(); // Only prevent for the expand button
+              this.toggleExpand();
+            }}
+            title={expanded ? 'Collapse details' : 'Expand details'}
+          >
+            {expanded ? '▲' : '▼'}
+          </button>
         </div>
         {expanded && (
           <div className="card-body">
@@ -279,6 +347,9 @@ class ExpandableCard extends React.Component {
         <div className="card-footer">
           <span className="card-label">Time:</span>
           <span className="card-value">{result.time}</span>
+          {isGeneratingTicket && (
+            <span className="generating-indicator">🎫 Generating...</span>
+          )}
         </div>
       </div>
     );
